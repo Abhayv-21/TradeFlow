@@ -1,0 +1,3652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TradeFlow — Stock Trading Platform</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ══════════════ RESET ══════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+/* ══════════════ TOKENS ══════════════ */
+:root{
+  --bg:#060810;--bg2:#0b0f1e;--bg3:#0f1628;--bg4:#141d32;
+  --surface:#172035;--surface2:#1c2840;--surface3:#21304c;--surface4:#263858;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);--border3:rgba(255,255,255,0.18);
+  --text:#e8eeff;--text2:#7a8faf;--text3:#3f5070;--text4:#1e3050;
+  --green:#00e5b0;--green2:#00c89a;--green3:#00a880;
+  --green-bg:rgba(0,229,176,0.07);--green-glow:rgba(0,229,176,0.15);
+  --red:#ff3d6b;--red2:#e52b56;--red3:#c01840;
+  --red-bg:rgba(255,61,107,0.07);--red-glow:rgba(255,61,107,0.15);
+  --blue:#3d9eff;--blue2:#2080e8;--blue-bg:rgba(61,158,255,0.07);
+  --amber:#ffb020;--amber2:#e09000;--amber-bg:rgba(255,176,32,0.07);
+  --purple:#9d7bff;--purple2:#7d5bdf;--purple-bg:rgba(157,123,255,0.07);
+  --accent:#00e5b0;--accent2:#00c89a;
+  --r:8px;--r2:12px;--r3:16px;--r4:20px;--r5:24px;
+  --shadow-sm:0 2px 8px rgba(0,0,0,0.4);
+  --shadow:0 4px 24px rgba(0,0,0,0.5);
+  --shadow-lg:0 8px 40px rgba(0,0,0,0.6);
+  --shadow-glow:0 0 30px rgba(0,229,176,0.12);
+  --t:0.16s ease;--t2:0.28s ease;--t3:0.4s ease;
+  --sidebar:256px;
+}
+.light{
+  --bg:#f4f7ff;--bg2:#eaeffe;--bg3:#e0e8fc;--bg4:#d6dff8;
+  --surface:#ffffff;--surface2:#f5f8ff;--surface3:#ebf0ff;--surface4:#e1e9ff;
+  --border:rgba(0,0,0,0.06);--border2:rgba(0,0,0,0.11);--border3:rgba(0,0,0,0.18);
+  --text:#060d20;--text2:#3a4d6a;--text3:#7a8faf;--text4:#a0b4cf;
+  --green:#007a60;--green2:#006650;--green3:#005040;
+  --green-bg:rgba(0,122,96,0.07);--green-glow:rgba(0,122,96,0.12);
+  --red:#c0183a;--red2:#a01030;--red3:#800820;
+  --red-bg:rgba(192,24,58,0.07);--red-glow:rgba(192,24,58,0.12);
+  --blue:#1060c8;--blue2:#0848a8;--blue-bg:rgba(16,96,200,0.07);
+  --amber:#9a6000;--amber2:#804800;--amber-bg:rgba(154,96,0,0.07);
+  --purple:#5030a8;--purple2:#381888;--purple-bg:rgba(80,48,168,0.07);
+  --accent:#007a60;--accent2:#006650;
+  --shadow-sm:0 2px 8px rgba(0,0,0,0.06);
+  --shadow:0 4px 24px rgba(0,0,0,0.08);
+  --shadow-lg:0 8px 40px rgba(0,0,0,0.12);
+  --shadow-glow:0 0 30px rgba(0,122,96,0.10);
+}
+
+/* ══════════════ BASE ══════════════ */
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;
+  min-height:100vh;-webkit-font-smoothing:antialiased;
+  transition:background var(--t2),color var(--t2);
+  overflow-x:hidden; /* FIX: prevent horizontal scrollbar from sidebar */
+}
+#root{display:flex;min-height:100vh;width:100%;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--border3)}
+
+/* ══════════════ TYPOGRAPHY ══════════════ */
+.syne{font-family:'Syne',sans-serif}
+.mono{font-family:'JetBrains Mono',monospace}
+.pos{color:var(--green)}
+.neg{color:var(--red)}
+
+/* ══════════════ INPUTS ══════════════ */
+input,select,textarea{
+  background:var(--bg3);border:1.5px solid var(--border2);
+  color:var(--text);border-radius:var(--r);padding:11px 14px;
+  font-family:'Inter',sans-serif;font-size:14px;outline:none;width:100%;
+  transition:border-color var(--t),box-shadow var(--t),background var(--t);
+}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--green-glow)}
+input::placeholder{color:var(--text3)}
+input:disabled{opacity:.45;cursor:not-allowed}
+select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%237a8faf' stroke-width='2'%3E%3Cpath d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+
+/* ══════════════ BUTTONS ══════════════ */
+button{cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;border:none;transition:all var(--t);outline:none}
+button:disabled{opacity:.5;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+button:active:not(:disabled){transform:scale(0.97)!important}
+.btn{padding:10px 20px;border-radius:var(--r);font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#060810;font-weight:700;letter-spacing:.01em}
+.btn-primary:hover:not(:disabled){background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 20px var(--green-glow)}
+.btn-outline{background:transparent;border:1.5px solid var(--border2);color:var(--text2)}
+.btn-outline:hover:not(:disabled){background:var(--surface2);border-color:var(--border3);color:var(--text)}
+.btn-ghost{background:transparent;border:none;color:var(--text3);padding:6px 10px;border-radius:var(--r)}
+.btn-ghost:hover{background:var(--surface2);color:var(--text2)}
+.btn-buy{background:var(--green);color:#060810;font-weight:700;border-radius:var(--r);padding:13px 32px;font-size:15px;letter-spacing:.02em}
+.btn-buy:hover:not(:disabled){background:var(--green2);transform:translateY(-2px);box-shadow:0 6px 24px var(--green-glow)}
+.btn-sell{background:var(--red);color:#fff;font-weight:700;border-radius:var(--r);padding:13px 32px;font-size:15px;letter-spacing:.02em}
+.btn-sell:hover:not(:disabled){background:var(--red2);transform:translateY(-2px);box-shadow:0 6px 24px var(--red-glow)}
+.btn-sm{padding:5px 13px;font-size:12px;border-radius:var(--r)}
+.btn-xs{padding:3px 10px;font-size:11px;border-radius:6px}
+.btn-icon{padding:8px;border-radius:var(--r);display:inline-flex;align-items:center;justify-content:center}
+
+/* ══════════════ CARDS ══════════════ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:22px;transition:border-color var(--t),box-shadow var(--t)}
+.card:hover{border-color:var(--border2)}
+.card-glass{background:linear-gradient(135deg,rgba(255,255,255,.04) 0%,rgba(255,255,255,.01) 100%);backdrop-filter:blur(20px);border:1px solid var(--border2);border-radius:var(--r2);padding:22px}
+
+/* ══════════════ BADGES ══════════════ */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;letter-spacing:.02em}
+.bg{background:var(--green-bg);color:var(--green)}
+.br{background:var(--red-bg);color:var(--red)}
+.bb{background:var(--blue-bg);color:var(--blue)}
+.ba{background:var(--amber-bg);color:var(--amber)}
+.bp{background:var(--purple-bg);color:var(--purple)}
+
+/* ══════════════ TABLES ══════════════ */
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;padding:10px 14px;border-bottom:1px solid var(--border)}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:13px}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background var(--t)}
+tbody tr:hover td{background:var(--surface2)}
+
+/* ══════════════ LAYOUT ══════════════ */
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+/* FIX: minmax(0,1fr) prevents grid blowout — grid cells can shrink below content size */
+@media(max-width:1200px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.row{display:flex;align-items:center}
+.col{display:flex;flex-direction:column}
+.between{display:flex;align-items:center;justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.f1{flex:1;min-width:0;} /* FIX: min-width:0 lets flex items shrink properly */
+.g4p{gap:4px}.g6{gap:6px}.g8{gap:8px}.g10{gap:10px}.g12{gap:12px}.g16{gap:16px}.g20{gap:20px}.g24{gap:24px}
+.ovx{overflow-x:auto}
+.mb4{margin-bottom:4px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}.mb24{margin-bottom:24px}
+
+/* ══════════════ SIDEBAR ══════════════ */
+.sidebar{
+  width:var(--sidebar);background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;height:100vh;
+  z-index:300;transition:transform var(--t2);
+}
+.sb-logo{padding:24px 18px 16px;border-bottom:1px solid var(--border)}
+.sb-nav{flex:1;overflow-y:auto;padding:12px 8px}
+.sb-sec{font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.12em;padding:14px 14px 4px}
+.nav-item{
+  display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:var(--r);
+  cursor:pointer;margin-bottom:2px;color:var(--text3);font-weight:500;
+  font-size:13.5px;position:relative;transition:all var(--t);
+}
+.nav-item:hover{background:var(--surface);color:var(--text2)}
+.nav-item.on{background:var(--surface3);color:var(--green);font-weight:600}
+.nav-item.on::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;background:var(--green);border-radius:0 3px 3px 0}
+.ni{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.6}
+.nav-item.on .ni,.nav-item:hover .ni{opacity:1}
+.sb-foot{padding:14px 10px;border-top:1px solid var(--border)}
+.mkt-pill{background:rgba(0,229,176,0.06);border:1px solid rgba(0,229,176,0.2);border-radius:var(--r);padding:10px 12px;margin-bottom:10px}
+
+/* ══════════════ MAIN ══════════════ */
+.main{
+  margin-left:var(--sidebar);
+  flex:1;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  transition:margin var(--t2);
+  width:calc(100% - var(--sidebar)); /* FIX: constrain width so content can't overflow */
+  min-width:0; /* FIX: allow flex child to shrink below content size */
+  overflow-x:hidden; /* FIX: clip any internal overflow */
+}
+.topbar{height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:200;width:100%;}
+.content{flex:1;padding:26px;width:100%;max-width:1440px;margin:0 auto;overflow-x:hidden;}
+canvas{max-width:100%;display:block;} /* FIX: ensure Chart.js canvas never escapes its container */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0;width:100%;}
+  .topbar,.content{padding-left:16px;padding-right:16px}
+  .content{padding-top:16px;padding-bottom:16px}
+}
+
+/* ══════════════ TICKER ══════════════ */
+.ticker{background:var(--bg3);border-bottom:1px solid var(--border);padding:6px 0;overflow:hidden;white-space:nowrap;cursor:default}
+.ticker-inner{display:inline-flex;gap:32px;animation:ticker 45s linear infinite}
+.ticker-inner:hover{animation-play-state:paused}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ti{font-family:'JetBrains Mono',monospace;font-size:11px;display:inline-flex;align-items:center;gap:6px}
+.ti-sym{color:var(--text2);font-weight:600}
+.ti-px{color:var(--text)}
+.ti-chg{font-size:10px}
+
+/* ══════════════ PAGE HEADER ══════════════ */
+.ph{margin-bottom:26px}
+.ph-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:3px;letter-spacing:-.03em}
+.ph-sub{color:var(--text3);font-size:13px}
+
+/* ══════════════ STAT CARDS ══════════════ */
+.sc{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);
+  padding:20px 22px;position:relative;overflow:hidden;
+  transition:border-color var(--t),transform var(--t),box-shadow var(--t);
+}
+.sc:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r2) var(--r2) 0 0}
+.sc.cg::before{background:linear-gradient(90deg,var(--green),transparent 80%)}
+.sc.cb::before{background:linear-gradient(90deg,var(--blue),transparent 80%)}
+.sc.cr::before{background:linear-gradient(90deg,var(--red),transparent 80%)}
+.sc.ca::before{background:linear-gradient(90deg,var(--amber),transparent 80%)}
+.sc.cp::before{background:linear-gradient(90deg,var(--purple),transparent 80%)}
+.sc-icon{position:absolute;right:16px;top:16px;opacity:.08;transform:scale(2.5)}
+.sl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px}
+.sv{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-.03em;margin-bottom:6px;line-height:1}
+.ss{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:5px}
+
+/* ══════════════ SECTION HEADER ══════════════ */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px}
+.st{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;color:var(--text)}
+
+/* ══════════════ CHART ══════════════ */
+.cw{position:relative;width:100%;min-width:0;overflow:hidden;} /* FIX: min-width:0 allows flex shrink; overflow:hidden clips chart */
+.ch180{height:180px}.ch220{height:220px}.ch260{height:260px}.ch300{height:300px}
+
+/* ══════════════ TABS ══════════════ */
+.tabs{display:flex;gap:2px;background:var(--bg3);padding:3px;border-radius:var(--r2);margin-bottom:22px;flex-wrap:wrap}
+.tab{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:var(--r);cursor:pointer;font-weight:600;font-size:13px;color:var(--text3);transition:all var(--t);user-select:none}
+.tab:hover{color:var(--text2)}
+.tab.on{background:var(--surface3);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.25)}
+
+/* ══════════════ ANIMATIONS ══════════════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideR{from{transform:translateX(-14px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideD{from{transform:translateY(-10px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes slideU{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes numUp{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes glow{0%,100%{box-shadow:0 0 12px var(--green-glow)}50%{box-shadow:0 0 28px var(--green-glow)}}
+.fu{animation:fadeUp .32s ease both}
+.fi{animation:fadeIn .25s ease both}
+.su{animation:slideU .25s ease both}
+.sd{animation:slideD .2s ease both}
+[style*='--d']{animation-delay:var(--d,0ms)}
+
+/* ══════════════ SKELETON ══════════════ */
+.sk{
+  background:linear-gradient(90deg,var(--surface) 25%,var(--surface3) 50%,var(--surface) 75%);
+  background-size:200% 100%;animation:shimmer 1.5s ease infinite;border-radius:var(--r);
+}
+.skl{height:13px;margin-bottom:8px}
+.skh{height:34px}
+.skr{display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--border)}
+.skr:last-child{border-bottom:none}
+.skc{height:13px;flex:1;border-radius:4px}
+
+/* ══════════════ SPINNER / LIVE DOT ══════════════ */
+.spin{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;flex-shrink:0}
+.spin-lg{width:36px;height:36px;border-width:3px}
+.spin-sm{width:14px;height:14px;border-width:2px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.8s ease infinite;display:inline-block;flex-shrink:0}
+.dot-red{background:var(--red)}
+
+/* ══════════════ PROGRESS ══════════════ */
+.prog{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.pf{height:100%;border-radius:3px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+
+/* ══════════════ NOTIFICATIONS ══════════════ */
+.nstack{position:fixed;top:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.notif{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--r2);padding:15px 18px;
+  min-width:310px;max-width:400px;
+  box-shadow:var(--shadow-lg);pointer-events:all;
+  animation:slideR .28s cubic-bezier(.34,1.56,.64,1);
+}
+.n-ok{border-left:3px solid var(--green);background:linear-gradient(90deg,var(--green-bg),var(--surface))}
+.n-err{border-left:3px solid var(--red);background:linear-gradient(90deg,var(--red-bg),var(--surface))}
+.n-info{border-left:3px solid var(--blue);background:linear-gradient(90deg,var(--blue-bg),var(--surface))}
+.n-warn{border-left:3px solid var(--amber);background:linear-gradient(90deg,var(--amber-bg),var(--surface))}
+
+/* ══════════════ INLINE BANNERS ══════════════ */
+.ierr{background:var(--red-bg);border:1px solid rgba(255,61,107,.35);border-radius:var(--r);padding:11px 14px;color:var(--red);font-size:13px;display:flex;align-items:center;gap:8px;animation:slideD .2s ease}
+.iok{background:var(--green-bg);border:1px solid rgba(0,229,176,.35);border-radius:var(--r);padding:11px 14px;color:var(--green);font-size:13px;display:flex;align-items:center;gap:8px;animation:slideD .2s ease}
+
+/* ══════════════ LOGIN ══════════════ */
+.lr{min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden}
+.lg{position:absolute;border-radius:50%;pointer-events:none;filter:blur(60px)}
+.lg.g1{width:600px;height:600px;background:radial-gradient(circle,rgba(0,229,176,.07) 0%,transparent 70%);top:-200px;left:-200px}
+.lg.g2{width:500px;height:500px;background:radial-gradient(circle,rgba(61,158,255,.07) 0%,transparent 70%);bottom:-150px;right:-150px}
+.lg.g3{width:300px;height:300px;background:radial-gradient(circle,rgba(157,123,255,.05) 0%,transparent 70%);top:40%;right:20%}
+.lcard{
+  position:relative;z-index:1;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--r4);padding:44px 40px;width:92%;max-width:440px;
+  box-shadow:0 32px 80px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.04);
+}
+.lf{margin-bottom:18px}
+.lf label{display:block;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px}
+.lhint{text-align:center;font-size:12px;color:var(--text3);margin-top:20px;line-height:1.8}
+.lhint code{background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:2px 6px;font-family:'JetBrains Mono';color:var(--text2);font-size:11px}
+.ldiv{display:flex;align-items:center;gap:12px;margin:20px 0}
+.ldiv::before,.ldiv::after{content:'';flex:1;height:1px;background:var(--border)}
+.ldiv span{font-size:11px;color:var(--text3)}
+.demo-btn{display:flex;align-items:center;justify-content:center;gap:8px;flex:1 1 0;min-width:0;padding:10px;border:1.5px solid var(--border2);border-radius:var(--r);background:var(--bg3);color:var(--text2);cursor:pointer;transition:all var(--t);font-family:'Inter';font-size:12px;font-weight:600;overflow:hidden}
+.demo-btn>div{min-width:0;overflow:hidden}
+.demo-btn>div>div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.demo-btn:hover{background:var(--surface2);border-color:var(--border3);color:var(--text)}
+
+/* ══════════════ STOCK CHIPS ══════════════ */
+.chip{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1.5px solid transparent;cursor:pointer;transition:all var(--t);background:var(--surface2);color:var(--text3);user-select:none}
+.chip:hover{background:var(--surface3);color:var(--text2)}
+.chip.on{color:#060810}
+.chip-d{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ══════════════ ORDER FORM ══════════════ */
+.ot-btn{flex:1;padding:11px 6px;font-weight:700;font-size:14px;border-radius:var(--r);cursor:pointer;transition:all var(--t);border:2px solid transparent;font-family:'Inter';letter-spacing:.02em}
+.ot-buy{background:var(--green-bg);color:var(--green);border-color:rgba(0,229,176,.25)}
+.ot-buy.on{background:var(--green);color:#060810;border-color:var(--green);box-shadow:0 4px 16px var(--green-glow)}
+.ot-sell{background:var(--red-bg);color:var(--red);border-color:rgba(255,61,107,.25)}
+.ot-sell.on{background:var(--red);color:#fff;border-color:var(--red);box-shadow:0 4px 16px var(--red-glow)}
+.price-type-btn{padding:7px 14px;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;transition:all var(--t);border:1.5px solid var(--border2);background:transparent;color:var(--text3);font-family:'Inter';flex:1}
+.price-type-btn.on{background:var(--surface3);border-color:var(--accent);color:var(--accent)}
+
+/* ══════════════ MOBILE ══════════════ */
+.mob-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:299;backdrop-filter:blur(3px)}
+#mbtn{display:none}
+@media(max-width:768px){#mbtn{display:flex}}
+
+/* ══════════════ MISC ══════════════ */
+.divider{height:1px;background:var(--border);margin:16px 0}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;color:var(--text3);gap:12px;text-align:center}
+.empty-icon{opacity:.25}
+.kbd{background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:2px 7px;font-family:'JetBrains Mono';font-size:11px;color:var(--text2)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, createContext, useContext, useMemo } = React;
+
+/* ════════════════════════════════════════════
+   CONFIG
+════════════════════════════════════════════ */
+const API_BASE = "http://localhost:4000/api";
+
+/* ════════════════════════════════════════════
+   API LAYER
+════════════════════════════════════════════ */
+/* Build querystring that SKIPS undefined / null / empty values.
+   Using `new URLSearchParams({x:undefined})` serialises to the literal
+   string "undefined", which breaks backend filtering on equality. */
+const _qs = (p) => {
+  if (!p) return '';
+  const clean = {};
+  for (const k in p) {
+    const v = p[k];
+    if (v !== undefined && v !== null && v !== '') clean[k] = v;
+  }
+  const keys = Object.keys(clean);
+  return keys.length ? '?' + new URLSearchParams(clean).toString() : '';
+};
+
+const api = {
+  _token: localStorage.getItem('tf_token'),
+  setToken(t)  { this._token = t; localStorage.setItem('tf_token', t); },
+  clearToken() { this._token = null; localStorage.removeItem('tf_token'); },
+  headers() {
+    /* FIX: only add Authorization header when token actually exists */
+    const tok = this._token || localStorage.getItem('tf_token');
+    const h = { 'Content-Type': 'application/json' };
+    if (tok) h['Authorization'] = 'Bearer ' + tok;
+    return h;
+  },
+
+    async req(method, path, body, retries = 1) {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const res = await fetch(API_BASE + path, {
+            method,
+            headers: this.headers(),
+            body: body != null ? JSON.stringify(body) : undefined,
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+          return data;
+        } catch (e) {
+          /* FIX: on last attempt, throw so callers can handle the error */
+          if (attempt === retries) throw e;
+          /* wait 500ms before retrying */
+          await new Promise(r => setTimeout(r, 500));
+        }
+      }
+    },
+  
+  get:   (p)    => api.req('GET',    p),
+  post:  (p, b) => api.req('POST',   p, b),
+  put:   (p, b) => api.req('PUT',    p, b),
+  patch: (p, b) => api.req('PATCH',  p, b),
+  del:   (p)    => api.req('DELETE', p),
+  login:       (email, pw) => api.post('/auth/login', { email, password: pw }),
+  me:          ()          => api.get('/auth/me'),
+  stocks:      ()          => api.get('/stocks'),
+  history:     (id, d)     => api.get(`/stocks/${id}/history?days=${d||30}`),
+  orders:      (st)        => api.get('/orders' + (st ? `?status=${st}` : '')),
+  trades:      ()          => api.get('/orders/trades'),
+  placeOrder:  (body)      => api.post('/orders', body),
+  cancelOrder: (id)        => api.del(`/orders/${id}`),
+  portfolio:   ()          => api.get('/portfolio'),
+  wallet:      ()          => api.get('/wallet'),
+  // ── COMPANY role API ──────────────────────────────────────
+  companyProfile:      ()        => api.get('/company/profile'),
+  companyStockOverview:()        => api.get('/company/stock/overview'),
+  companyStockHistory: (days)    => api.get(`/company/stock/history?days=${days||30}`),
+  companySentiment:    ()        => api.get('/company/stock/sentiment'),
+  companyAnnouncements:()        => api.get('/company/announcements'),
+  createAnnouncement:  (body)    => api.post('/company/announcements', body),
+  updateAnnouncement:  (id,body) => api.put(`/company/announcements/${id}`, body),
+  deleteAnnouncement:  (id)      => api.del(`/company/announcements/${id}`),
+  companyFinancials:   ()        => api.get('/company/financials'),
+  createFinancial:     (body)    => api.post('/company/financials', body),
+  adminCompanies:      ()        => api.get('/admin/companies'),
+  createCompany:       (body)    => api.post('/admin/companies', body),
+  verifyCompany:       (id,v)    => api.patch(`/admin/companies/${id}/verify`, {verified:v}),
+  deleteCompany:       (id)      => api.del(`/admin/companies/${id}`),
+  walletTxns:  ()          => api.get('/wallet/transactions'),
+  deposit:     (amt)       => api.post('/wallet/deposit',  { amount: amt }),
+  withdraw:    (amt)       => api.post('/wallet/withdraw', { amount: amt }),
+  adminLogs:     (st)       => api.get('/admin/logs'  + (st && st !== 'ALL' ? `?status=${st}` : '')),
+  adminDbTxns:   ()         => api.get('/admin/db-transactions'),
+  adminLocks:    ()         => api.get('/admin/locks'),
+  adminStats:    ()         => api.get('/admin/stats'),
+  adminUsers:    (p)        => api.get('/admin/users'   + _qs(p)),
+  adminOrders:   (p)        => api.get('/admin/orders'  + _qs(p)),
+  adminTrades:   (p)        => api.get('/admin/trades'  + _qs(p)),
+  adminAudit:    (p)        => api.get('/admin/audit'   + _qs(p)),
+  adminConfig:   ()         => api.get('/admin/config'),
+  updateConfig:  (key,val)  => api.put(`/admin/config/${key}`, { value: val }),
+  updateUser:    (id,body)  => api.patch(`/admin/users/${id}`, body),
+  adminInsights: ()         => api.get('/admin/insights'),
+};
+
+/* ════════════════════════════════════════════
+   CHART COLORS
+════════════════════════════════════════════ */
+const COLORS = [
+  {b:'#00e5b0',bg:'rgba(0,229,176,.08)'},
+  {b:'#3d9eff',bg:'rgba(61,158,255,.08)'},
+  {b:'#ffb020',bg:'rgba(255,176,32,.08)'},
+  {b:'#9d7bff',bg:'rgba(157,123,255,.08)'},
+  {b:'#ff3d6b',bg:'rgba(255,61,107,.08)'},
+  {b:'#26d0e8',bg:'rgba(38,208,232,.08)'},
+  {b:'#ff7b3d',bg:'rgba(255,123,61,.08)'},
+  {b:'#8fe045',bg:'rgba(143,224,69,.08)'},
+  {b:'#e04dff',bg:'rgba(224,77,255,.08)'},
+  {b:'#ff9fbd',bg:'rgba(255,159,189,.08)'},
+];
+const cc = (id, i=0) => COLORS[Math.abs(parseInt(id||i)) % COLORS.length];
+
+/* ════════════════════════════════════════════
+   CONTEXT
+════════════════════════════════════════════ */
+const Ctx = createContext();
+const useApp = () => useContext(Ctx);
+
+/* ════════════════════════════════════════════
+   UTILITIES
+════════════════════════════════════════════ */
+const fmt = (n, d=2) => {
+  if (n == null || isNaN(n)) return '—';
+  const a = Math.abs(n);
+  if (a >= 1e7) return (n/1e7).toFixed(2) + ' Cr';
+  if (a >= 1e5) return (n/1e5).toFixed(2) + ' L';
+  if (a >= 1e3) return Number(n).toLocaleString('en-IN', {minimumFractionDigits:d,maximumFractionDigits:d});
+  return Number(n).toFixed(d);
+};
+const curr  = n => '₹' + fmt(n);
+const pct   = (c, p) => p ? (((c-p)/Math.abs(p))*100).toFixed(2) : '0.00';
+const cx    = (...a) => a.filter(Boolean).join(' ');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ════════════════════════════════════════════
+   ANIMATED COUNTER  — smooth number transitions
+════════════════════════════════════════════ */
+const AnimNum = ({ value=0, prefix='₹', decimals=2 }) => {
+  const [display, setDisplay] = useState(value);
+  const raf = useRef(null);
+  const prev = useRef(value);
+  useEffect(() => {
+    if (prev.current === value) return;
+    const start = prev.current, end = value, dur = 700, t0 = Date.now();
+    const step = () => {
+      const p = Math.min((Date.now()-t0)/dur, 1);
+      const ease = 1 - Math.pow(1-p, 3);
+      setDisplay(start + (end-start)*ease);
+      if (p < 1) raf.current = requestAnimationFrame(step);
+      else { setDisplay(end); prev.current = end; }
+    };
+    raf.current = requestAnimationFrame(step);
+    prev.current = value;
+    return () => cancelAnimationFrame(raf.current);
+  }, [value]);
+  return <span style={{display:'inline-block',animation:'numUp .3s ease'}}>{prefix}{fmt(display, decimals)}</span>;
+};
+
+/* ════════════════════════════════════════════
+   ICONS
+════════════════════════════════════════════ */
+const P = {
+  home:'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10',
+  chart:'M22 12h-4l-3 9L9 3l-3 9H2',
+  order:'M9 11l3 3L22 4 M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11',
+  port:'M12 2L2 7l10 5 10-5-10-5M2 17l10 5 10-5M2 12l10 5 10-5',
+  wallet:'M21 4H3a2 2 0 00-2 2v12a2 2 0 002 2h18a2 2 0 002-2V6a2 2 0 00-2-2z M16 10a1 1 0 100 2 1 1 0 000-2z',
+  hist:'M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14 M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3',
+  logs:'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
+  lock:'M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2zM7 11V7a5 5 0 0110 0v4',
+  db:'M12 2C6.48 2 2 4.24 2 7s4.48 5 10 5 10-2.24 10-5-4.48-5-10-5zM2 12c0 2.76 4.48 5 10 5s10-2.24 10-5M2 17c0 2.76 4.48 5 10 5s10-2.24 10-5',
+  sun:'M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 5a7 7 0 100 14A7 7 0 0012 5z',
+  moon:'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z',
+  user:'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z',
+  up:'M12 19V5M5 12l7-7 7 7',
+  dn:'M12 5v14M19 12l-7 7-7-7',
+  tu:'M23 6l-9.5 9.5-5-5L1 18M17 6h6v6',
+  td:'M23 18l-9.5-9.5-5 5L1 6M17 18h6v-6',
+  srch:'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
+  ref:'M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15',
+  menu:'M3 12h18M3 6h18M3 18h18',
+  x:'M18 6L6 18M6 6l12 12',
+  chk:'M20 6L9 17l-5-5',
+  alrt:'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01',
+  info:'M12 22a10 10 0 100-20 10 10 0 000 20zM12 8h.01M11 12h1v4h1',
+  eye:'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z',
+  out:'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9',
+  shld:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  filt:'M22 3H2l8 9.46V19l4 2v-8.54L22 3',
+  plus:'M12 5v14M5 12h14',
+  arw:'M5 12h14M12 5l7 7-7 7',
+};
+const Icon = ({ n, size=16, color='currentColor', cls='' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+       className={cls} style={{flexShrink:0}}>
+    {(P[n]||'').split('M').filter(Boolean).map((d,i)=>(
+      <path key={i} d={'M'+d}/>
+    ))}
+  </svg>
+);
+
+/* ════════════════════════════════════════════
+   SPARKLINE
+════════════════════════════════════════════ */
+const Spark = ({ data=[], pos=true, h=36, w=90 }) => {
+  if (!data.length) return <svg width={w} height={h}/>;
+  const vals = data.map(d => parseFloat(d.price ?? d));
+  const mn = Math.min(...vals), mx = Math.max(...vals);
+  const sy = v => h - ((v-mn)/((mx-mn)||1))*(h-6)-3;
+  const pts = vals.map((v,i) => `${(i/(vals.length-1))*w},${sy(v)}`).join(' ');
+  const color = pos ? 'var(--green)' : 'var(--red)';
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{display:'block',flexShrink:0}}>
+      <defs>
+        <linearGradient id={`sg_${pos}`} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity=".3"/>
+          <stop offset="100%" stopColor={color} stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      <polygon points={`0,${h} ${pts} ${w},${h}`} fill={`url(#sg_${pos})`}/>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.8" strokeLinejoin="round"/>
+    </svg>
+  );
+};
+
+/* ════════════════════════════════════════════
+   SKELETON LOADERS
+════════════════════════════════════════════ */
+const SkTable = ({ rows=5 }) => (
+  <div style={{padding:'4px 0'}}>
+    {Array.from({length:rows}).map((_,i)=>(
+      <div key={i} className="skr" style={{'--d':`${i*60}ms`,animation:`fadeIn .3s ease ${i*60}ms both`}}>
+        {[2,1.5,1,1,1,1].map((f,j)=><div key={j} className="skc sk" style={{flex:f,animationDelay:`${i*60+j*20}ms`}}/>)}
+      </div>
+    ))}
+  </div>
+);
+const SkStats = ({ n=4 }) => (
+  <div className={`g${n} mb24`}>
+    {Array.from({length:n}).map((_,i)=>(
+      <div key={i} className="sc" style={{height:100,'--d':`${i*80}ms`,animation:`fadeUp .3s ease ${i*80}ms both`}}>
+        <div className="sk skl" style={{width:'55%',marginBottom:12}}/>
+        <div className="sk skh" style={{width:'75%'}}/>
+      </div>
+    ))}
+  </div>
+);
+const SkCard = () => (
+  <div className="card" style={{height:200}}>
+    <div className="sk skl" style={{width:'40%',marginBottom:20}}/>
+    <div className="sk" style={{height:130,borderRadius:'var(--r)'}}/>
+  </div>
+);
+
+/* ════════════════════════════════════════════
+   NOTIFICATIONS
+════════════════════════════════════════════ */
+const NotifStack = ({ items, remove }) => (
+  <div className="nstack">
+    {items.map(n => (
+      <div key={n.id} className={cx('notif',`n-${n.t}`)}>
+        <div className="between" style={{marginBottom:n.msg?5:0}}>
+          <div className="row g8">
+            <Icon n={n.t==='ok'?'chk':n.t==='err'?'alrt':'info'} size={14}
+                  color={n.t==='ok'?'var(--green)':n.t==='err'?'var(--red)':'var(--blue)'}/>
+            <span style={{fontWeight:700,fontSize:13}}>{n.title}</span>
+          </div>
+          <button className="btn-ghost btn-icon" style={{padding:2,marginLeft:8}} onClick={()=>remove(n.id)}>
+            <Icon n="x" size={13}/>
+          </button>
+        </div>
+        {n.msg && <div style={{fontSize:12,color:'var(--text2)',paddingLeft:22,lineHeight:1.5}}>{n.msg}</div>}
+      </div>
+    ))}
+  </div>
+);
+
+/* ════════════════════════════════════════════
+   useData hook
+════════════════════════════════════════════ */
+const useData = (fetcher, deps=[], init=null) => {
+  const [data,    setData]    = useState(init);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
+  const [tick,    setTick]    = useState(0);
+  const refetch = useCallback(() => setTick(t=>t+1), []);
+  useEffect(() => {
+    let dead = false;
+    setLoading(true); setError(null);
+    fetcher()
+      .then(d  => { if (!dead) { setData(d);         setLoading(false); } })
+      .catch(e => { if (!dead) { setError(e.message); setLoading(false); } });
+    return () => { dead = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...deps, tick]);
+  return { data, loading, error, refetch };
+};
+
+/* ════════════════════════════════════════════
+   CHART HELPERS
+════════════════════════════════════════════ */
+const baseChartOpts = (yFmt = v=>'₹'+parseFloat(v).toFixed(0)) => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: { mode:'index', intersect:false },
+  animation: { duration: 600, easing:'easeInOutQuart' },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#172035',
+      borderColor: 'rgba(255,255,255,.1)',
+      borderWidth: 1,
+      titleColor: '#e8eeff',
+      bodyColor: '#7a8faf',
+      padding: 12,
+      cornerRadius: 8,
+      callbacks: { label: c => ` ${c.dataset.label}: ${yFmt(c.raw)}` },
+    },
+  },
+  scales: {
+    x: { grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#3f5070',font:{size:10},maxTicksLimit:8} },
+    /* FIX: changed position from 'right' to 'left' so chart fills left-to-right correctly */
+    y: { position:'left', grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#3f5070',font:{size:10},callback:yFmt} },
+  },
+});
+
+/* ════════════════════════════════════════════
+   TOPBAR
+════════════════════════════════════════════ */
+const Topbar = ({ dark, setDark, setSbOpen }) => {
+  const { wallet, user, logout } = useApp();
+  const initials = (user?.name||'U').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const bal = parseFloat(wallet?.balance||0);
+  return (
+    <div className="topbar">
+      <div className="row g12">
+        <button id="mbtn" className="btn btn-icon btn-outline" onClick={()=>setSbOpen(p=>!p)}>
+          <Icon n="menu" size={17}/>
+        </button>
+        <div className="row g8" style={{fontSize:11,color:'var(--text3)',fontFamily:'JetBrains Mono'}}>
+          <div className="dot"/><span style={{fontWeight:600,letterSpacing:'.06em'}}>LIVE</span>
+          <span style={{color:'var(--text4)'}}>·</span>
+          <span>NSE 09:15–15:30</span>
+        </div>
+      </div>
+      <div className="row g10">
+        <div style={{
+          background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--r)',
+          padding:'7px 16px',fontSize:13,display:'flex',alignItems:'center',gap:10,
+        }}>
+          <Icon n="wallet" size={13} color="var(--text3)"/>
+          <span style={{color:'var(--text3)',fontSize:12}}>Balance</span>
+          <span className="mono" style={{fontWeight:700,color:'var(--accent)',fontSize:13}}>
+            <AnimNum value={bal}/>
+          </span>
+        </div>
+        <button className="btn btn-icon btn-outline" onClick={()=>setDark(!dark)} title="Toggle theme">
+          <Icon n={dark?'sun':'moon'} size={16}/>
+        </button>
+        <div className="row g8">
+          <div style={{
+            width:34,height:34,borderRadius:'50%',
+            background:'linear-gradient(135deg,var(--blue),var(--purple))',
+            display:'flex',alignItems:'center',justifyContent:'center',
+            fontSize:12,fontWeight:800,color:'#fff',flexShrink:0,
+            boxShadow:'0 2px 8px rgba(61,158,255,.3)',
+          }}>{initials}</div>
+          <div className="col" style={{gap:0}}>
+            <span style={{fontSize:12,fontWeight:600,lineHeight:1.2}}>{user?.name}</span>
+            <span style={{fontSize:10,color:user?.role==='ADMIN'?'var(--amber)':'var(--text3)'}}>{user?.role}</span>
+          </div>
+          <button className="btn btn-sm btn-outline row g6" onClick={logout}>
+            <Icon n="out" size={13}/><span style={{fontSize:11}}>Sign out</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════════════ */
+const Sidebar = ({ page, setPage, open, setOpen }) => {
+  const { user } = useApp();
+  const isAdmin   = user?.role === 'ADMIN';
+  const isCompany = user?.role === 'COMPANY';
+  const go = id => { setPage(id); setOpen(false); };
+
+  const USER_NAV = [
+    { id:'dashboard', label:'Dashboard',      icon:'home'   },
+    { id:'stocks',    label:'Markets',         icon:'chart'  },
+    { id:'order',     label:'Place Order',     icon:'order'  },
+    { id:'portfolio', label:'Portfolio',       icon:'port'   },
+    { id:'wallet',    label:'Wallet',          icon:'wallet' },
+    { id:'history',   label:'Orders & Trades', icon:'hist'   },
+  ];
+  const COMPANY_NAV = [
+    { id:'co_dashboard',    label:'Company Dashboard', icon:'home'   },
+    { id:'co_stock',        label:'My Stock',          icon:'chart'  },
+    { id:'co_profile',      label:'Company Profile',   icon:'user'   },
+  ];
+
+  const navItems = isCompany ? COMPANY_NAV : USER_NAV;
+  const roleColor = isAdmin ? 'var(--amber)' : isCompany ? 'var(--blue)' : 'var(--green)';
+
+  return (
+    <div className={cx('sidebar', open&&'open')}>
+      <div className="sb-logo">
+        <div className="row g10">
+          <div style={{width:36,height:36,borderRadius:10,background:'var(--accent)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'var(--shadow-glow)'}}>
+            <Icon n="chart" size={18} color="#060810"/>
+          </div>
+          <div>
+            <div className="syne" style={{fontSize:17,fontWeight:800,letterSpacing:'-.04em',color:'var(--text)'}}>TradeFlow</div>
+            <div style={{fontSize:10,color:'var(--text3)',marginTop:-1}}>{isCompany ? 'IR Portal' : 'Stock Trading Platform'}</div>
+          </div>
+        </div>
+      </div>
+      <nav className="sb-nav">
+        <div className="sb-sec">{isCompany ? 'Investor Relations' : 'Platform'}</div>
+        {navItems.map((item,i)=>(
+          <div key={item.id} className={cx('nav-item',page===item.id&&'on')} onClick={()=>go(item.id)}
+               style={{'--d':`${i*40}ms`,animation:'slideR .3s ease both',animationDelay:`${i*40}ms`}}>
+            <span className="ni"><Icon n={item.icon} size={15}/></span>
+            {item.label}
+          </div>
+        ))}
+        {isAdmin && <>
+          <div className="sb-sec" style={{marginTop:8}}>Admin</div>
+          <div className={cx('nav-item',page==='admin'&&'on')} onClick={()=>go('admin')}>
+            <span className="ni"><Icon n="shld" size={15}/></span>Admin Panel
+          </div>
+          <div className={cx('nav-item',page==='logs'&&'on')} onClick={()=>go('logs')}>
+            <span className="ni"><Icon n="logs" size={15}/></span>System Logs
+          </div>
+        </>}
+      </nav>
+      <div className="sb-foot">
+        {!isCompany && (
+          <div className="mkt-pill">
+            <div style={{fontSize:10,color:'var(--green)',fontWeight:700,marginBottom:4,letterSpacing:'.07em'}}>MARKET OPEN</div>
+            <div className="row g6" style={{fontSize:11,color:'var(--text2)'}}>
+              <div className="dot" style={{width:6,height:6}}/>
+              NSE · 09:15–15:30 IST
+            </div>
+          </div>
+        )}
+        <div style={{fontSize:11,color:'var(--text3)',display:'flex',alignItems:'center',gap:6,padding:'0 4px'}}>
+          <Icon n="shld" size={12}/>
+          Role: <span style={{color:roleColor,fontWeight:700,marginLeft:2}}>{user?.role}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   TICKER TAPE
+════════════════════════════════════════════ */
+const Ticker = ({ stocks }) => {
+  if (!stocks?.length) return null;
+  const items = [...stocks, ...stocks];
+  return (
+    <div className="ticker" title="Hover to pause">
+      <div className="ticker-inner">
+        {items.map((s,i) => {
+          const ch = parseFloat(pct(s.price, s.prev_price));
+          const pos = ch >= 0;
+          return (
+            <span key={i} className="ti">
+              <span className="ti-sym">{s.symbol}</span>
+              <span className="ti-px" style={{color:pos?'var(--green)':'var(--red)'}}>{parseFloat(s.price||0).toFixed(2)}</span>
+              <span className="ti-chg" style={{color:pos?'var(--green)':'var(--red)'}}>{pos?'▲':'▼'} {Math.abs(ch)}%</span>
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   LOGIN PAGE
+════════════════════════════════════════════ */
+const Login = ({ onLogin }) => {
+  const [email,   setEmail]   = useState('');
+  const [pw,      setPw]      = useState('');
+  const [showPw,  setShowPw]  = useState(false);
+  const [err,     setErr]     = useState('');
+  const [loading, setLoading] = useState(false);
+  const emailRef = useRef(null);
+  useEffect(()=>{ emailRef.current?.focus(); },[]);
+
+  const submit = async () => {
+    if (!email.trim()) return setErr('Please enter your email address.');
+    if (!pw)           return setErr('Please enter your password.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setErr('Please enter a valid email address.');
+    setErr(''); setLoading(true);
+    try {
+      const d = await api.login(email.trim().toLowerCase(), pw);
+      api.setToken(d.token);
+      localStorage.setItem('tf_token', d.token);
+      onLogin(d.user);
+    } catch (e) { setErr(e.message); }
+    finally { setLoading(false); }
+  };
+
+  const fill = (e,p) => { setEmail(e); setPw(p); setErr(''); };
+
+  return (
+    <div className="lr">
+      <div className="lg g1"/><div className="lg g2"/><div className="lg g3"/>
+      <div className="lcard fu">
+        <div className="row g12 mb24" style={{marginBottom:32}}>
+          <div style={{width:42,height:42,borderRadius:12,background:'var(--accent)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'var(--shadow-glow)'}}>
+            <Icon n="chart" size={22} color="#060810"/>
+          </div>
+          <div>
+            <div className="syne" style={{fontSize:22,fontWeight:800,letterSpacing:'-.04em'}}>TradeFlow</div>
+            <div style={{fontSize:11,color:'var(--text3)',marginTop:-2}}>Professional Stock Trading</div>
+          </div>
+        </div>
+        <div style={{marginBottom:26}}>
+          <div className="syne" style={{fontSize:24,fontWeight:800,marginBottom:5}}>Welcome back</div>
+          <div style={{fontSize:13,color:'var(--text3)'}}>Sign in to your trading account to continue</div>
+        </div>
+        {err && (
+          <div className="ierr mb16" style={{marginBottom:16}}>
+            <Icon n="alrt" size={14}/>{err}
+          </div>
+        )}
+        <div className="lf">
+          <label>Email address</label>
+          <input ref={emailRef} type="email" placeholder="you@example.com" value={email}
+            onChange={e=>{setEmail(e.target.value);setErr('');}}
+            onKeyDown={e=>e.key==='Enter'&&submit()} autoComplete="email"/>
+        </div>
+        <div className="lf">
+          <label>Password</label>
+          <div style={{position:'relative'}}>
+            <input type={showPw?'text':'password'} placeholder="Enter your password" value={pw}
+              onChange={e=>{setPw(e.target.value);setErr('');}}
+              onKeyDown={e=>e.key==='Enter'&&submit()}
+              autoComplete="current-password" style={{paddingRight:44}}/>
+            <button onClick={()=>setShowPw(p=>!p)}
+              style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--text3)',padding:4,cursor:'pointer',display:'flex',borderRadius:4}} tabIndex={-1}>
+              <Icon n="eye" size={16}/>
+            </button>
+          </div>
+        </div>
+        <button onClick={submit} disabled={loading} className="btn btn-primary"
+          style={{width:'100%',padding:'14px',fontSize:15,justifyContent:'center',marginTop:6,borderRadius:'var(--r2)'}}>
+          {loading
+            ? <><span className="spin spin-sm" style={{borderTopColor:'#060810'}}/>&nbsp;Signing in…</>
+            : <><span>Sign In</span><Icon n="arw" size={15}/></>
+          }
+        </button>
+        <div className="ldiv"><span>Quick access</span></div>
+        <div className="row g8">
+          <button className="demo-btn" onClick={()=>fill('demo@tradeflow.in','password')}>
+            <Icon n="user" size={14}/><div><div style={{fontSize:12,fontWeight:700}}>User Demo</div><div style={{fontSize:10,color:'var(--text3)'}}>demo@tradeflow.in</div></div>
+          </button>
+          <button className="demo-btn" onClick={()=>fill('admin@tradeflow.in','password')} style={{borderColor:'rgba(255,176,32,.3)',color:'var(--amber)'}}>
+            <Icon n="shld" size={14}/><div><div style={{fontSize:12,fontWeight:700}}>Admin Demo</div><div style={{fontSize:10,color:'var(--text3)'}}>admin@tradeflow.in</div></div>
+          </button>
+          <button className="demo-btn" onClick={()=>fill('company@tradeflow.in','password')} style={{borderColor:'rgba(61,158,255,.3)',color:'var(--blue)'}}>
+            <Icon n="chart" size={14}/><div><div style={{fontSize:12,fontWeight:700}}>Company Demo</div><div style={{fontSize:10,color:'var(--text3)'}}>company@tradeflow.in</div></div>
+          </button>
+        </div>
+        <div className="lhint">
+          Password for all: <code>password</code><br/>
+          <span style={{fontSize:11,color:'var(--text4)'}}>Backend must run on <code>localhost:4000</code></span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   DASHBOARD
+════════════════════════════════════════════ */
+const Dashboard = () => {
+  const { wallet, portfolio, recentOrders, user, refreshAll } = useApp();
+  const chartRef  = useRef(null);
+  const chartInst = useRef(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // FIX: support both column names (total_invested from view, invested_value as alias)
+  const invested = portfolio?.reduce((s,p)=>s+parseFloat(p.invested_value||p.total_invested||0),0)||0;
+  const curVal   = portfolio?.reduce((s,p)=>s+parseFloat(p.current_value||0),0)||0;
+  const pnl      = curVal - invested;
+  const bal      = parseFloat(wallet?.balance||0);
+  const pnlPct   = invested > 0 ? parseFloat(pct(curVal, invested)) : 0;
+
+  // Performance line chart using portfolio holdings history
+  useEffect(()=>{
+    if (!chartRef.current || !portfolio?.length) return;
+    if (chartInst.current) chartInst.current.destroy();
+    const labels = portfolio.map(p=>p.symbol);
+    const pnlData = portfolio.map(p=>parseFloat(p.pnl_pct||0));
+    chartInst.current = new Chart(chartRef.current.getContext('2d'),{
+      type:'bar',
+      data:{
+        labels,
+        datasets:[{
+          label:'P&L %',
+          data:pnlData,
+          backgroundColor:pnlData.map(v=>v>=0?'rgba(0,229,176,.55)':'rgba(255,61,107,.55)'),
+          borderColor:pnlData.map(v=>v>=0?'var(--green)':'var(--red)'),
+          borderWidth:2,
+          borderRadius:6,
+          borderSkipped:false,
+        }],
+      },
+      options:{
+        ...baseChartOpts(v=>v.toFixed(2)+'%'),
+        plugins:{...baseChartOpts().plugins,tooltip:{...baseChartOpts().plugins.tooltip,callbacks:{label:c=>` ${c.dataset.label}: ${c.raw.toFixed(2)}%`}}},
+      },
+    });
+    return ()=>{if(chartInst.current)chartInst.current.destroy();};
+  },[portfolio]);
+
+  const doRefresh = async () => {
+    setRefreshing(true);
+    await refreshAll();
+    setRefreshing(false);
+  };
+
+  return (
+    <div className="fu">
+      <div className="ph between">
+        <div>
+          <div className="ph-title">Dashboard</div>
+          <div className="ph-sub">Good {new Date().getHours()<12?'morning':new Date().getHours()<17?'afternoon':'evening'}, {user?.name?.split(' ')[0]} 👋</div>
+        </div>
+        <button className="btn btn-sm btn-outline row g6" onClick={doRefresh} disabled={refreshing}>
+          <Icon n="ref" size={13} cls={refreshing?'refresh-spin':''}/>
+          {refreshing?'Refreshing…':'Refresh'}
+        </button>
+      </div>
+
+      {/* Stat cards */}
+      {!wallet||!portfolio ? <SkStats n={4}/> : (
+        <div className="g4 mb24">
+          {[
+            { l:'Portfolio Value', v:curVal,   c:'cg', s:`${pnlPct>=0?'+':''}${pnlPct}% total return`, icon:'port',  signed:false },
+            { l:'Wallet Balance',  v:bal,       c:'cb', s:'Available to invest',                         icon:'wallet',signed:false },
+            { l:'Unrealized P&L',  v:pnl,       c:pnl>=0?'cg':'cr', s:`${portfolio.length} position${portfolio.length!==1?'s':''}`, icon:'tu', signed:true },
+            { l:'Total Invested',  v:invested,  c:'ca', s:'Cost basis',                                  icon:'hist', signed:false },
+          ].map((x,i)=>(
+            <div key={i} className={`sc ${x.c}`} style={{'--d':`${i*70}ms`,animation:`fadeUp .35s ease ${i*70}ms both`}}>
+              <div className="sc-icon"><Icon n={x.icon} size={24}/></div>
+              <div className="sl">{x.l}</div>
+              <div className="sv" style={{color:x.signed&&x.v<0?'var(--red)':x.signed&&x.v>0?'var(--green)':undefined,fontSize:24}}>
+                <AnimNum value={x.v}/>
+              </div>
+              <div className="ss" style={{color:x.signed&&x.v>0?'var(--green)':x.signed&&x.v<0?'var(--red)':'var(--text3)'}}>
+                {x.signed&&x.v>0&&<Icon n="tu" size={11}/>}
+                {x.signed&&x.v<0&&<Icon n="td" size={11}/>}
+                {x.s}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="g2 mb24">
+        <div className="card">
+          <div className="sh">
+            <div className="st"><Icon n="chart" size={14}/>Holdings P&L by Stock</div>
+          </div>
+          <div className="cw ch220">
+            {portfolio===null && <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:220,gap:8,color:'var(--text3)'}}><span className="spin"/>Loading…</div>}
+            {portfolio?.length ? <canvas ref={chartRef}/> : null}
+            {portfolio?.length===0 && (
+              <div className="empty" style={{height:220}}>
+                <div className="empty-icon"><Icon n="chart" size={40}/></div>
+                <div style={{fontWeight:600}}>No holdings yet</div>
+                <div style={{fontSize:12}}>Place a BUY order to get started</div>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="card">
+          <div className="sh"><div className="st"><Icon n="port" size={14}/>Top Holdings</div></div>
+          {portfolio===null ? <SkTable rows={4}/> :
+           portfolio.length===0 ?
+            <div className="empty" style={{minHeight:160}}>
+              <div className="empty-icon"><Icon n="port" size={36}/></div>
+              <div style={{fontWeight:600}}>Portfolio is empty</div>
+            </div> :
+           portfolio.slice(0,6).map((h,i)=>{
+             const pnl2=parseFloat(h.unrealized_pnl||0);
+             const c=cc(h.stock_id,i);
+             return (
+               <div key={h.portfolio_id} className="between" style={{padding:'10px 0',borderBottom:'1px solid var(--border)',animation:`fadeUp .3s ease ${i*50}ms both`}}>
+                 <div className="row g10">
+                   <div style={{width:36,height:36,borderRadius:9,background:`${c.bg}`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'JetBrains Mono',fontSize:10,fontWeight:700,color:c.b,border:`1.5px solid ${c.bg}`,flexShrink:0}}>
+                     {(h.symbol||'?').slice(0,4)}
+                   </div>
+                   <div>
+                     <div style={{fontWeight:700,fontSize:13,marginBottom:2}}>{h.symbol}</div>
+                     <div style={{fontSize:11,color:'var(--text3)'}}>{h.total_quantity} shares · avg {curr(h.avg_buy_price)}</div>
+                   </div>
+                 </div>
+                 <div style={{textAlign:'right'}}>
+                   <div className="mono" style={{fontWeight:600,fontSize:13,marginBottom:2}}>{curr(h.current_value)}</div>
+                   <div style={{fontSize:11,color:pnl2>=0?'var(--green)':'var(--red)',fontFamily:'JetBrains Mono'}}>
+                     {pnl2>=0?'+':''}{curr(pnl2)} <span style={{opacity:.7}}>({pnl2>=0?'+':''}{parseFloat(h.pnl_pct||0).toFixed(2)}%)</span>
+                   </div>
+                 </div>
+               </div>
+             );
+           })
+          }
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="sh">
+          <div className="st"><Icon n="hist" size={14}/>Recent Orders</div>
+          <button className="btn btn-sm btn-ghost row g5" onClick={doRefresh}><Icon n="ref" size={12}/>Refresh</button>
+        </div>
+        {recentOrders===null ? <SkTable rows={5}/> : recentOrders.length===0 ?
+          <div className="empty"><div className="empty-icon"><Icon n="order" size={36}/></div><div style={{fontWeight:600}}>No orders yet</div></div> : (
+          <div className="ovx">
+            <table>
+              <thead><tr><th>Symbol</th><th>Type</th><th>Qty</th><th>Price</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody>
+                {recentOrders.slice(0,8).map((o,i)=>(
+                  <tr key={o.order_id} style={{animation:`fadeUp .3s ease ${i*40}ms both`}}>
+                    <td style={{fontWeight:700,color:'var(--text)'}}>{o.symbol}</td>
+                    <td><span className={`badge ${o.order_type==='BUY'?'bg':'br'}`}>{o.order_type}</span></td>
+                    <td className="mono">{o.quantity}</td>
+                    <td className="mono">{curr(o.order_price)}</td>
+                    <td className="mono" style={{fontWeight:600}}>{curr(o.total)}</td>
+                    <td><span className={`badge ${o.order_status==='EXECUTED'?'bg':o.order_status==='PENDING'?'bb':'ba'}`}>{o.order_status}</span></td>
+                    <td style={{fontSize:11,color:'var(--text3)'}}>{new Date(o.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   MARKETS / STOCKS PAGE
+════════════════════════════════════════════ */
+const StocksPage = () => {
+  const { stocks, setPage, setPreselect } = useApp();
+  const [search,  setSearch]  = useState('');
+  const [sortBy,  setSortBy]  = useState('symbol');
+  const [selIds,  setSelIds]  = useState([]);
+  const [mode,    setMode]    = useState('compare');
+  const [focusId, setFocusId] = useState(null);
+  const [histMap, setHistMap] = useState({});
+  const [loadH,   setLoadH]   = useState(false);
+  const [days,    setDays]    = useState(30);
+  const chartRef  = useRef(null);
+  const chartInst = useRef(null);
+
+  useEffect(()=>{
+    if (stocks?.length && selIds.length===0) {
+      setSelIds(stocks.slice(0,2).map(s=>s.stock_id));
+      setFocusId(stocks[0]?.stock_id);
+    }
+  },[stocks]);
+
+  const fetchHist = useCallback(async ids=>{
+    const missing = ids.filter(id=>!histMap[`${id}_${days}`]);
+    if (!missing.length) return;
+    setLoadH(true);
+    try {
+      const results = await Promise.all(missing.map(id=>api.history(id,days).then(d=>({id,data:d.history}))));
+      setHistMap(prev=>{
+        const n={...prev};
+        results.forEach(r=>{ n[`${r.id}_${days}`]=r.data; });
+        return n;
+      });
+    } catch(_){} finally{setLoadH(false);}
+  },[histMap,days]);
+
+  useEffect(()=>{
+    const ids = mode==='compare'?selIds:(focusId?[focusId]:[]);
+    fetchHist(ids);
+  },[selIds,focusId,mode,days]);
+
+  useEffect(()=>{
+    if (!chartRef.current) return;
+    const ids = mode==='compare'?selIds:(focusId?[focusId]:[]);
+    if (!ids.every(id=>histMap[`${id}_${days}`])) return;
+    if (chartInst.current) chartInst.current.destroy();
+    const first = histMap[`${ids[0]}_${days}`]||[];
+    const labels = first.map(d=>d.date);
+    const datasets = ids.map((id,i)=>{
+      const hist=histMap[`${id}_${days}`]||[];
+      const c=cc(id,i);
+      const isPos=hist.length>1&&parseFloat(hist[hist.length-1].price)>=parseFloat(hist[0].price);
+      return {
+        label:stocks?.find(s=>s.stock_id===id)?.symbol||String(id),
+        data:hist.map(d=>parseFloat(d.price)),
+        borderColor:mode==='single'?(isPos?c.b:'var(--red)'):c.b,
+        backgroundColor:mode==='single'?(isPos?c.bg:'rgba(255,61,107,.07)'):c.bg,
+        tension:0.4,fill:ids.length===1,pointRadius:0,borderWidth:2,pointHoverRadius:5,
+      };
+    });
+    chartInst.current = new Chart(chartRef.current.getContext('2d'),{
+      type:'line',data:{labels,datasets},
+      options:baseChartOpts(),
+    });
+    return ()=>{if(chartInst.current)chartInst.current.destroy();};
+  },[histMap,selIds,focusId,mode,stocks,days]);
+
+  const toggle=id=>setSelIds(prev=>{
+    if(prev.includes(id)) return prev.length===1?prev:prev.filter(x=>x!==id);
+    if(prev.length>=6) return prev;
+    return [...prev,id];
+  });
+
+  const filtered=(stocks||[])
+    .filter(s=>(s.symbol||'').toLowerCase().includes(search.toLowerCase())||
+               (s.company_name||'').toLowerCase().includes(search.toLowerCase())||
+               (s.sector||'').toLowerCase().includes(search.toLowerCase()))
+    .sort((a,b)=>sortBy==='price'?parseFloat(b.price)-parseFloat(a.price):
+                 sortBy==='chg'?parseFloat(pct(b.price,b.prev_price))-parseFloat(pct(a.price,a.prev_price)):
+                 (a.symbol||'').localeCompare(b.symbol||''));
+
+  const focusS=(stocks||[]).find(s=>s.stock_id===focusId);
+  const focusCh=focusS?parseFloat(pct(focusS.price,focusS.prev_price)):0;
+
+  return (
+    <div className="fu">
+      <div className="ph"><div className="ph-title">Markets</div><div className="ph-sub">Live prices · Multi-stock comparison · Historical charts</div></div>
+
+      <div className="card mb16">
+        <div className="between mb14 wrap g8">
+          <div className="row g6">
+            <button onClick={()=>setMode('compare')} className={cx('btn btn-sm',mode==='compare'?'btn-primary':'btn-outline')}>
+              <Icon n="chart" size={13}/> Compare
+            </button>
+            <button onClick={()=>setMode('single')} className={cx('btn btn-sm',mode==='single'?'btn-primary':'btn-outline')}>
+              <Icon n="tu" size={13}/> Single
+            </button>
+          </div>
+          <div className="row g8">
+            {/* Days selector */}
+            {[7,14,30,90].map(d=>(
+              <button key={d} onClick={()=>setDays(d)} className={cx('btn btn-xs',days===d?'btn-primary':'btn-outline')}>
+                {d}D
+              </button>
+            ))}
+          </div>
+          {mode==='single'&&focusS&&(
+            <div className="row g10 wrap">
+              <span className="syne" style={{fontSize:17,fontWeight:700}}>{focusS.symbol}</span>
+              <span className="mono" style={{fontSize:22,fontWeight:700}}>{curr(focusS.price)}</span>
+              <span className={`badge ${focusCh>=0?'bg':'br'}`}>{focusCh>=0?'+':''}{focusCh}%</span>
+              <span style={{fontSize:11,color:'var(--text3)'}}>{focusS.company_name}</span>
+            </div>
+          )}
+        </div>
+
+        {mode==='compare'&&(
+          <div className="row mb12 wrap" style={{gap:6}}>
+            {(stocks||[]).map((s,i)=>{
+              const on=selIds.includes(s.stock_id);
+              const c=cc(s.stock_id,i);
+              const ch=parseFloat(pct(s.price,s.prev_price));
+              return (
+                <button key={s.stock_id} onClick={()=>toggle(s.stock_id)}
+                  className={cx('chip',on&&'on')}
+                  style={on?{background:c.b,borderColor:c.b}:{borderColor:c.b}}>
+                  <span className="chip-d" style={{background:on?'#060810':c.b}}/>
+                  {s.symbol}
+                  <span style={{fontSize:10,opacity:.8}}>{ch>=0?'+':''}{ch}%</span>
+                </button>
+              );
+            })}
+            <span style={{fontSize:11,color:'var(--text3)',marginLeft:4}}>Max 6</span>
+          </div>
+        )}
+        {mode==='single'&&(
+          <div className="row mb12 wrap" style={{gap:6}}>
+            {(stocks||[]).map(s=>(
+              <button key={s.stock_id} onClick={()=>setFocusId(s.stock_id)}
+                className={cx('btn btn-sm',focusId===s.stock_id?'btn-primary':'btn-outline')}>
+                {s.symbol}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {mode==='compare'&&(
+          <div className="row mb10 wrap" style={{gap:12,fontSize:11}}>
+            {selIds.map((id,i)=>{
+              const c=cc(id,i);const s=(stocks||[]).find(x=>x.stock_id===id);
+              return (
+                <span key={id} className="row g5">
+                  <span style={{width:10,height:10,borderRadius:3,background:c.b,display:'inline-block'}}/>
+                  <span style={{color:'var(--text2)',fontWeight:600}}>{s?.symbol||id}</span>
+                  {s&&<span style={{color:'var(--text3)'}}>{curr(s.price)}</span>}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="cw ch260" style={{position:'relative'}}>
+          <canvas ref={chartRef}/>
+          {loadH&&(
+            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(15,22,40,.8)',borderRadius:'var(--r)',gap:8,color:'var(--text2)'}}>
+              <span className="spin"/>Loading chart data…
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="sh">
+          <div className="st"><Icon n="filt" size={14}/>All Stocks <span style={{color:'var(--text3)',fontWeight:500,fontSize:12}}>({(stocks||[]).length})</span></div>
+          <div className="row wrap g8">
+            <div style={{position:'relative',maxWidth:240}}>
+              <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',color:'var(--text3)',pointerEvents:'none'}}><Icon n="srch" size={13}/></span>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search stocks…" style={{height:36,fontSize:13,paddingLeft:32}}/>
+            </div>
+            <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{height:36,fontSize:13,width:'auto'}}>
+              <option value="symbol">A – Z</option>
+              <option value="price">By Price</option>
+              <option value="chg">By Change</option>
+            </select>
+          </div>
+        </div>
+        {stocks===null ? <SkTable rows={8}/> : (
+          <div className="ovx">
+            <table>
+              <thead>
+                <tr>
+                  <th width="36" title="Add to comparison">Cmp</th>
+                  <th>Symbol</th><th>Company</th><th>Sector</th>
+                  <th style={{textAlign:'right'}}>Price</th>
+                  <th style={{textAlign:'right'}}>Change</th>
+                  <th>Trend (12pt)</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((s,i)=>{
+                  const ch=parseFloat(pct(s.price,s.prev_price));
+                  const on=selIds.includes(s.stock_id);
+                  const c=cc(s.stock_id,i);
+                  const hist=histMap[`${s.stock_id}_${days}`]||[];
+                  return (
+                    <tr key={s.stock_id} style={{cursor:'pointer',animation:`fadeUp .25s ease ${i*20}ms both`}}
+                        onClick={()=>{setFocusId(s.stock_id);setMode('single');}}>
+                      <td onClick={e=>{e.stopPropagation();toggle(s.stock_id);}}>
+                        <div style={{width:22,height:22,borderRadius:6,border:`2px solid ${c.b}`,background:on?c.b:'transparent',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',transition:'all .15s',margin:'auto'}}>
+                          {on&&<Icon n="chk" size={11} color="#060810"/>}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="mono" style={{fontWeight:700,color:on?c.b:'var(--text)',fontSize:13}}>{s.symbol}</span>
+                      </td>
+                      <td style={{color:'var(--text2)',maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:12}}>{s.company_name}</td>
+                      <td><span className="badge bb" style={{fontSize:10}}>{s.sector||'—'}</span></td>
+                      <td style={{textAlign:'right',fontFamily:'JetBrains Mono',fontWeight:600}}>{curr(s.price)}</td>
+                      <td style={{textAlign:'right'}}>
+                        <span style={{fontFamily:'JetBrains Mono',fontWeight:700,fontSize:12,color:ch>=0?'var(--green)':'var(--red)'}}>
+                          {ch>=0?'▲':'▼'} {Math.abs(ch)}%
+                        </span>
+                      </td>
+                      <td><Spark data={hist.slice(-12)} pos={ch>=0} h={32} w={80}/></td>
+                      <td onClick={e=>e.stopPropagation()}>
+                        <button className="btn btn-sm btn-primary" style={{fontSize:11}}
+                          onClick={()=>{setPreselect({stockId:s.stock_id,symbol:s.symbol,price:s.price});setPage('order');}}>
+                          Trade
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filtered.length===0&&(
+                  <tr><td colSpan={8}><div className="empty"><div className="empty-icon"><Icon n="srch" size={32}/></div><div>No stocks match "{search}"</div></div></td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   ORDER PAGE
+════════════════════════════════════════════ */
+const OrderPage = () => {
+  const { stocks, wallet, portfolio, refreshAll, addNotif, preselect, clearPreselect } = useApp();
+  const [ot,       setOt]      = useState('BUY');
+  const [stockId,  setStockId] = useState('');
+  const [qty,      setQty]     = useState('');
+  const [price,    setPrice]   = useState('');
+  const [priceType,setPriceType]=useState('MARKET');
+  const [loading,  setLoading] = useState(false);
+  const [apiErr,   setApiErr]  = useState('');
+  const [apiOk,    setApiOk]   = useState('');
+
+  useEffect(()=>{
+    if (preselect) {
+      setStockId(String(preselect.stockId));
+      setPrice(String(parseFloat(preselect.price||0).toFixed(2)));
+      clearPreselect();
+    }
+  },[preselect]);
+
+  // When stock changes & MARKET, auto-fill price
+  useEffect(()=>{
+    if (priceType==='MARKET' && stockId) {
+      const s = (stocks||[]).find(x=>String(x.stock_id)===String(stockId));
+      if (s) setPrice(parseFloat(s.price||0).toFixed(2));
+    }
+  },[stockId, priceType, stocks]);
+
+  const stock   = (stocks||[]).find(s=>String(s.stock_id)===String(stockId));
+  const execPx  = parseFloat(price||0);
+  const qtyInt  = parseInt(qty||0);
+  const total   = qtyInt>0&&execPx>0 ? qtyInt*execPx : 0;
+  const bal     = parseFloat(wallet?.balance||0);
+  const holding = (portfolio||[]).find(p=>String(p.stock_id)===String(stockId));
+  const held    = parseInt(holding?.total_quantity||0);
+  const sufficient = ot==='BUY' ? total<=bal : qtyInt<=held;
+
+  const submit = async () => {
+    if (!stockId)       return setApiErr('Please select a stock.');
+    if (!qty||qtyInt<=0) return setApiErr('Please enter a valid quantity (minimum 1).');
+    if (!price||execPx<=0) return setApiErr('Please enter a valid price.');
+    if (ot==='BUY'&&total>bal)    return setApiErr(`Insufficient balance. Need ${curr(total)}, have ${curr(bal)}.`);
+    if (ot==='SELL'&&qtyInt>held) return setApiErr(`You hold only ${held} share${held!==1?'s':''} of ${stock?.symbol}.`);
+    setApiErr(''); setApiOk(''); setLoading(true);
+    try {
+      const d = await api.placeOrder({ stock_id:parseInt(stockId), order_type:ot, qty:qtyInt, price:execPx });
+      setApiOk(d.message || `${ot} order for ${qtyInt} × ${stock.symbol} executed successfully.`);
+      addNotif({ t:'ok', title:`${ot} Order Executed ✓`, msg:`${qtyInt} × ${stock.symbol} @ ${curr(execPx)} — Total: ${curr(total)}` });
+      setQty('');
+      await refreshAll();
+    } catch(e) {
+      setApiErr(e.message);
+      addNotif({ t:'err', title:'Order Failed', msg:e.message });
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="fu" style={{maxWidth:920,margin:'0 auto'}}>
+      <div className="ph"><div className="ph-title">Place Order</div><div className="ph-sub">Execute trades with real-time validation and atomic settlement</div></div>
+      <div className="g2">
+        <div className="card">
+          {/* BUY/SELL toggle */}
+          <div className="row g8 mb20">
+            <button onClick={()=>{setOt('BUY');setApiErr('');setApiOk('');}} className={cx('ot-btn ot-buy',ot==='BUY'&&'on')}>BUY</button>
+            <button onClick={()=>{setOt('SELL');setApiErr('');setApiOk('');}} className={cx('ot-btn ot-sell',ot==='SELL'&&'on')}>SELL</button>
+          </div>
+
+          <div className="col g16">
+            <div>
+              <label style={{display:'block',fontSize:11,fontWeight:600,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.09em',marginBottom:7}}>Stock</label>
+              <select value={stockId} onChange={e=>{setStockId(e.target.value);setApiErr('');setApiOk('');}}>
+                <option value="">— Select a stock —</option>
+                {(stocks||[]).map(s=>(
+                  <option key={s.stock_id} value={s.stock_id}>
+                    {s.symbol} — {s.company_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{display:'block',fontSize:11,fontWeight:600,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.09em',marginBottom:7}}>Order Type</label>
+              <div className="row g6">
+                {['MARKET','LIMIT','SL'].map(t=>(
+                  <button key={t} onClick={()=>setPriceType(t)}
+                    className={cx('price-type-btn',priceType===t&&'on')}>{t}</button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label style={{display:'block',fontSize:11,fontWeight:600,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.09em',marginBottom:7}}>Quantity</label>
+              <input type="number" min="1" value={qty}
+                onChange={e=>{setQty(e.target.value);setApiErr('');setApiOk('');}}
+                placeholder="0" style={{fontFamily:'JetBrains Mono',fontSize:22,fontWeight:700}}/>
+              {ot==='SELL'&&holding&&(
+                <div style={{marginTop:6,fontSize:12,color:'var(--text3)',display:'flex',gap:6,alignItems:'center'}}>
+                  <span>Available to sell:</span>
+                  <span style={{color:'var(--amber)',fontWeight:700,fontFamily:'JetBrains Mono'}}>{held} shares</span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label style={{display:'block',fontSize:11,fontWeight:600,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.09em',marginBottom:7}}>
+                {priceType==='MARKET'?'Market Price':'Limit Price'} (₹)
+              </label>
+              <input type="number" min="0.01" step="0.01" value={price}
+                onChange={e=>{setPrice(e.target.value);setApiErr('');setApiOk('');}}
+                placeholder={stock?parseFloat(stock.price||0).toFixed(2):'0.00'}
+                style={{fontFamily:'JetBrains Mono',fontSize:20,fontWeight:600}}
+                readOnly={priceType==='MARKET'}/>
+              {priceType==='MARKET'&&<div style={{fontSize:11,color:'var(--text3)',marginTop:5}}>Auto-filled from live market price</div>}
+            </div>
+
+            {apiErr && <div className="ierr"><Icon n="alrt" size={14}/>{apiErr}</div>}
+            {apiOk  && <div className="iok"><Icon n="chk"  size={14}/>{apiOk}</div>}
+
+            <button onClick={submit} disabled={loading||!stockId}
+              className={cx(ot==='BUY'?'btn-buy':'btn-sell')}
+              style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:10,borderRadius:'var(--r2)'}}>
+              {loading
+                ? <><span className="spin spin-sm" style={{borderTopColor:ot==='BUY'?'#060810':'#fff'}}/> Processing…</>
+                : <>{ot==='BUY'?'Buy':'Sell'} {stock?.symbol||'—'} {total>0&&<span style={{opacity:.75,fontSize:12}}>· {curr(total)}</span>}</>
+              }
+            </button>
+          </div>
+        </div>
+
+        <div className="col g16">
+          {/* Market info */}
+          <div className="card">
+            <div className="st mb14"><Icon n="info" size={14}/>Market Details</div>
+            {!stock ? (
+              <div className="empty" style={{minHeight:120}}>
+                <div className="empty-icon"><Icon n="chart" size={32}/></div>
+                <div style={{fontSize:12}}>Select a stock to view details</div>
+              </div>
+            ) : (
+              <div>
+                {[
+                  ['Current Price', curr(stock.price), undefined],
+                  ['Prev Close',    curr(stock.prev_price||0), undefined],
+                  ['Today\'s Change', `${parseFloat(pct(stock.price,stock.prev_price))>=0?'+':''}${pct(stock.price,stock.prev_price)}%`, parseFloat(pct(stock.price,stock.prev_price))>=0?'var(--green)':'var(--red)'],
+                  ['Sector',        stock.sector||'—', undefined],
+                  ...(holding?[['Your Holdings',`${held} shares · avg ${curr(holding.avg_buy_price)}`,'var(--amber)']]:
+                    [['Your Holdings','None held','var(--text3)']]),
+                ].map(([k,v,col],i)=>(
+                  <div key={i} className="between" style={{padding:'8px 0',borderBottom:'1px solid var(--border)'}}>
+                    <span style={{color:'var(--text3)',fontSize:12}}>{k}</span>
+                    <span className="mono" style={{fontWeight:600,fontSize:13,color:col||'var(--text)'}}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Order summary card */}
+          <div className="card" style={{
+            background:ot==='BUY'?'var(--green-bg)':'var(--red-bg)',
+            borderColor:ot==='BUY'?'rgba(0,229,176,.25)':'rgba(255,61,107,.25)',
+          }}>
+            <div className="st mb14"><Icon n="order" size={14}/>Order Summary</div>
+            {[
+              ['Shares', qtyInt>0?qtyInt:'—'],
+              ['Price/share', execPx>0?curr(execPx):'—'],
+            ].map(([k,v],i)=>(
+              <div key={i} className="between mb10">
+                <span style={{color:'var(--text2)',fontSize:13}}>{k}</span>
+                <span className="mono" style={{fontWeight:600}}>{v}</span>
+              </div>
+            ))}
+            <div className="divider" style={{margin:'10px 0'}}/>
+            <div className="between" style={{marginBottom:14}}>
+              <span style={{fontWeight:700,fontSize:15}}>Total</span>
+              <span className="mono" style={{
+                fontWeight:800,fontSize:22,
+                color:ot==='BUY'?'var(--green)':'var(--red)',
+              }}>{total>0?curr(total):'₹0.00'}</span>
+            </div>
+
+            {ot==='BUY'&&total>0&&(
+              <div>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--text3)',marginBottom:5}}>
+                  <span>Wallet usage</span>
+                  <span style={{color:total>bal?'var(--red)':'var(--text2)'}}>{((total/bal)*100).toFixed(1)}%</span>
+                </div>
+                <div className="prog">
+                  <div className="pf" style={{width:`${Math.min(100,(total/bal)*100)}%`,background:total>bal?'var(--red)':'var(--green)'}}/>
+                </div>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginTop:5}}>
+                  <span style={{color:total>bal?'var(--red)':'var(--text3)'}}>Need: {curr(total)}</span>
+                  <span style={{color:'var(--text3)'}}>Have: {curr(bal)}</span>
+                </div>
+              </div>
+            )}
+
+            {ot==='SELL'&&holding&&qtyInt>0&&(
+              <div>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--text3)',marginBottom:5}}>
+                  <span>Selling</span>
+                  <span>{qtyInt>held?<span style={{color:'var(--red)'}}>Exceeds holdings</span>:`${qtyInt}/${held} shares`}</span>
+                </div>
+                <div className="prog">
+                  <div className="pf" style={{width:`${Math.min(100,(qtyInt/held)*100)}%`,background:qtyInt>held?'var(--red)':'var(--red)'}}/>
+                </div>
+              </div>
+            )}
+
+            {!sufficient&&total>0&&(
+              <div style={{marginTop:10,fontSize:11,color:'var(--red)',display:'flex',gap:5,alignItems:'center'}}>
+                <Icon n="alrt" size={12}/> Insufficient {ot==='BUY'?'balance':'shares'}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   PORTFOLIO PAGE
+════════════════════════════════════════════ */
+const PortfolioPage = () => {
+  const { portfolio, refreshAll } = useApp();
+  const donutRef=useRef(null), donutInst=useRef(null);
+  const barRef=useRef(null),   barInst=useRef(null);
+
+  const invested=portfolio?.reduce((s,p)=>s+parseFloat(p.invested_value||p.total_invested||0),0)||0;
+  const curVal  =portfolio?.reduce((s,p)=>s+parseFloat(p.current_value||0),0)||0;
+  const pnl     =curVal-invested;
+  const ret     =invested>0?parseFloat(pct(curVal,invested)):0;
+
+  useEffect(()=>{
+    if (!donutRef.current||!portfolio?.length) return;
+    if (donutInst.current) donutInst.current.destroy();
+    donutInst.current = new Chart(donutRef.current.getContext('2d'),{
+      type:'doughnut',
+      data:{
+        labels:portfolio.map(p=>p.symbol),
+        datasets:[{
+          data:portfolio.map(p=>parseFloat(p.current_value||0)),
+          backgroundColor:portfolio.map((_,i)=>cc(_.stock_id,i).b),
+          borderWidth:3,
+          borderColor:'var(--surface)',
+          hoverOffset:10,
+        }],
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,cutout:'75%',
+        animation:{duration:600,easing:'easeInOutQuart'},
+        plugins:{
+          legend:{display:false},
+          tooltip:{backgroundColor:'#172035',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#e8eeff',bodyColor:'#7a8faf',padding:12,cornerRadius:8,callbacks:{label:c=>`₹${fmt(c.raw)} (${((c.raw/curVal)*100).toFixed(1)}%)`}},
+        },
+      },
+    });
+    return ()=>{if(donutInst.current)donutInst.current.destroy();};
+  },[portfolio]);
+
+  useEffect(()=>{
+    if (!barRef.current||!portfolio?.length) return;
+    if (barInst.current) barInst.current.destroy();
+    barInst.current = new Chart(barRef.current.getContext('2d'),{
+      type:'bar',
+      data:{
+        labels:portfolio.map(p=>p.symbol),
+        datasets:[
+          {label:'Invested', data:portfolio.map(p=>parseFloat(p.invested_value||p.total_invested||0)),backgroundColor:'rgba(61,158,255,.55)',borderRadius:5},
+          {label:'Current',  data:portfolio.map(p=>parseFloat(p.current_value||0)), backgroundColor:'rgba(0,229,176,.55)',borderRadius:5},
+        ],
+      },
+      options:{...baseChartOpts(),plugins:{...baseChartOpts().plugins,legend:{display:false}}},
+    });
+    return ()=>{if(barInst.current)barInst.current.destroy();};
+  },[portfolio]);
+
+  return (
+    <div className="fu">
+      <div className="ph between">
+        <div><div className="ph-title">Portfolio</div><div className="ph-sub">Holdings, allocation, and performance analysis</div></div>
+        <button className="btn btn-sm btn-outline row g6" onClick={refreshAll}><Icon n="ref" size={13}/>Refresh</button>
+      </div>
+
+      {portfolio===null ? <SkStats n={4}/> : (
+        <>
+          <div className="g4 mb24">
+            {[
+              {l:'Invested',     v:invested, c:'cb'},
+              {l:'Current Value',v:curVal,   c:'cg'},
+              {l:'P&L',          v:pnl,      c:pnl>=0?'cg':'cr', signed:true},
+              {l:'Return',       raw:`${ret>=0?'+':''}${ret.toFixed(2)}%`, c:ret>=0?'cg':'cr'},
+            ].map((x,i)=>(
+              <div key={i} className={`sc ${x.c}`} style={{'--d':`${i*60}ms`,animation:`fadeUp .3s ease ${i*60}ms both`}}>
+                <div className="sl">{x.l}</div>
+                <div className="sv" style={{fontSize:24,color:x.signed&&x.v<0?'var(--red)':x.signed&&x.v>=0?'var(--green)':undefined}}>
+                  {x.raw || (x.signed&&x.v>0?'+':'') + curr(x.v)}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {portfolio.length===0 ? (
+            <div className="card">
+              <div className="empty" style={{padding:'64px 24px'}}>
+                <div className="empty-icon"><Icon n="port" size={52}/></div>
+                <div className="syne" style={{fontSize:18,fontWeight:700}}>Portfolio is empty</div>
+                <div style={{fontSize:13}}>Place a BUY order from the Markets page to start investing.</div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="g2 mb24">
+                <div className="card">
+                  <div className="st mb14"><Icon n="port" size={14}/>Allocation</div>
+                  <div className="row g16" style={{alignItems:'center',flexWrap:'wrap'}}>
+                    <div style={{position:'relative',width:170,height:170,flexShrink:0}}>
+                      <canvas ref={donutRef} style={{width:170,height:170}}/>
+                      <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+                        <div style={{fontSize:11,color:'var(--text3)'}}>Total Value</div>
+                        <div className="syne" style={{fontSize:14,fontWeight:800}}>{curr(curVal)}</div>
+                      </div>
+                    </div>
+                    <div className="col f1" style={{gap:8}}>
+                      {portfolio.map((p,i)=>{
+                        const w=curVal>0?((parseFloat(p.current_value)/curVal)*100).toFixed(1):0;
+                        const c=cc(p.stock_id,i).b;
+                        return (
+                          <div key={p.portfolio_id} className="row g8" style={{alignItems:'center'}}>
+                            <span style={{width:10,height:10,borderRadius:3,background:c,flexShrink:0}}/>
+                            <span style={{flex:1,fontSize:12,fontWeight:600}}>{p.symbol}</span>
+                            <div className="prog f1" style={{maxWidth:90}}>
+                              <div className="pf" style={{width:`${w}%`,background:c}}/>
+                            </div>
+                            <span style={{fontSize:11,color:'var(--text3)',width:36,textAlign:'right'}}>{w}%</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+                <div className="card">
+                  <div className="row g12 mb10" style={{fontSize:11}}>
+                    <span className="row g5"><span style={{width:10,height:10,borderRadius:3,background:'rgba(61,158,255,.55)',display:'inline-block'}}/><span style={{color:'var(--text2)'}}>Invested</span></span>
+                    <span className="row g5"><span style={{width:10,height:10,borderRadius:3,background:'rgba(0,229,176,.55)',display:'inline-block'}}/><span style={{color:'var(--text2)'}}>Current</span></span>
+                  </div>
+                  <div className="cw" style={{height:210}}><canvas ref={barRef}/></div>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="st mb18"><Icon n="port" size={14}/>Holdings Detail</div>
+                <div className="ovx">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Stock</th><th>Qty</th><th>Avg Price</th><th>Current</th>
+                        <th style={{textAlign:'right'}}>Invested</th>
+                        <th style={{textAlign:'right'}}>Value</th>
+                        <th style={{textAlign:'right'}}>P&L</th>
+                        <th style={{textAlign:'right'}}>Return</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {portfolio.map((h,i)=>{
+                        const pnl2=parseFloat(h.unrealized_pnl||0);
+                        const r=parseFloat(h.pnl_pct||0);
+                        const c=cc(h.stock_id,i);
+                        return (
+                          <tr key={h.portfolio_id} style={{animation:`fadeUp .25s ease ${i*40}ms both`}}>
+                            <td>
+                              <div style={{fontFamily:'JetBrains Mono',fontWeight:800,color:c.b,fontSize:13}}>{h.symbol}</div>
+                              <div style={{fontSize:11,color:'var(--text3)'}}>{h.company_name}</div>
+                            </td>
+                            <td className="mono">{h.total_quantity}</td>
+                            <td className="mono">{curr(h.avg_buy_price)}</td>
+                            <td className="mono">{curr(h.current_price)}</td>
+                            <td style={{textAlign:'right',fontFamily:'JetBrains Mono'}}>{curr(h.invested_value||h.total_invested)}</td>
+                            <td style={{textAlign:'right',fontFamily:'JetBrains Mono'}}>{curr(h.current_value)}</td>
+                            <td style={{textAlign:'right'}}>
+                              <span style={{fontFamily:'JetBrains Mono',fontWeight:700,color:pnl2>=0?'var(--green)':'var(--red)'}}>
+                                {pnl2>=0?'+':''}{curr(pnl2)}
+                              </span>
+                            </td>
+                            <td style={{textAlign:'right'}}>
+                              <span className={`badge ${r>=0?'bg':'br'}`}>{r>=0?'+':''}{r.toFixed(2)}%</span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   WALLET PAGE
+════════════════════════════════════════════ */
+const WalletPage = () => {
+  const { wallet, refreshAll, addNotif } = useApp();
+  const [amt,    setAmt]    = useState('');
+  const [mode,   setMode]   = useState('');
+  const [loading,setLoading]=useState(false);
+  const [apiErr, setApiErr] =useState('');
+  const { data:txData, loading:txLoad, refetch:refetchTx } = useData(()=>api.walletTxns(),[]);
+  const txns = txData?.transactions||[];
+  const chartRef=useRef(null), chartInst=useRef(null);
+
+  useEffect(()=>{
+    if (!chartRef.current||!txns.length) return;
+    if (chartInst.current) chartInst.current.destroy();
+    const pts=[...txns].reverse();
+    chartInst.current = new Chart(chartRef.current.getContext('2d'),{
+      type:'line',
+      data:{
+        labels:pts.map(t=>new Date(t.created_at).toLocaleDateString('en-IN',{month:'short',day:'numeric'})),
+        datasets:[{
+          label:'Balance',
+          data:pts.map(t=>parseFloat(t.current_balance||0)),
+          borderColor:'var(--blue)',
+          backgroundColor:'rgba(61,158,255,.07)',
+          tension:0.4,fill:true,pointRadius:3,borderWidth:2,
+          pointBackgroundColor:'var(--blue)',
+        }],
+      },
+      options:baseChartOpts(),
+    });
+    return ()=>{if(chartInst.current)chartInst.current.destroy();};
+  },[txns]);
+
+  const doTxn = async type => {
+    const a = parseFloat(amt);
+    if (!amt||isNaN(a)||a<=0) return setApiErr('Enter a valid positive amount.');
+    setApiErr(''); setLoading(true);
+    try {
+      const d = await (type==='deposit' ? api.deposit(a) : api.withdraw(a));
+      addNotif({t:'ok',title:type==='deposit'?'Deposit Successful':'Withdrawal Complete',msg:d.message});
+      setAmt(''); setMode('');
+      await Promise.all([refreshAll(), refetchTx()]);
+    } catch(e) { setApiErr(e.message); }
+    finally { setLoading(false); }
+  };
+
+  const bal=parseFloat(wallet?.balance||0);
+
+  return (
+    <div className="fu">
+      <div className="ph"><div className="ph-title">Wallet</div><div className="ph-sub">Manage funds, deposits, and transaction history</div></div>
+      <div className="g2 mb24">
+        {/* Balance card */}
+        <div className="card-glass" style={{background:'linear-gradient(135deg,rgba(61,158,255,.06),rgba(0,229,176,.04))',borderColor:'rgba(61,158,255,.2)',position:'relative',overflow:'hidden'}}>
+          <div style={{position:'absolute',right:-30,top:-30,width:140,height:140,borderRadius:'50%',background:'var(--blue-bg)',opacity:.4,pointerEvents:'none'}}/>
+          <div style={{position:'relative'}}>
+            <div style={{fontSize:11,color:'var(--text3)',fontWeight:600,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:10}}>Available Balance</div>
+            <div className="syne mono" style={{fontSize:40,fontWeight:800,marginBottom:6,color:'var(--accent)',letterSpacing:'-.02em'}}>
+              <AnimNum value={bal}/>
+            </div>
+            <div style={{fontSize:12,color:'var(--text3)',marginBottom:18}}>
+              <span className="dot" style={{marginRight:6}}/>Updated live
+            </div>
+            <div className="row g8">
+              <button className="btn btn-primary row g8" style={{padding:'10px 20px'}} onClick={()=>setMode(m=>m==='deposit'?'':'deposit')}>
+                <Icon n="dn" size={14}/> Add Money
+              </button>
+              <button className="btn btn-outline row g8" style={{padding:'10px 20px'}} onClick={()=>setMode(m=>m==='withdraw'?'':'withdraw')}>
+                <Icon n="up" size={14}/> Withdraw
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {mode ? (
+          <div className="card fi">
+            <div style={{fontWeight:700,fontSize:16,marginBottom:16,textTransform:'capitalize',display:'flex',alignItems:'center',gap:8}}>
+              <Icon n={mode==='deposit'?'dn':'up'} size={16} color={mode==='deposit'?'var(--green)':'var(--red)'}/>
+              {mode==='deposit'?'Add Money':'Withdraw Funds'}
+            </div>
+            <div className="row g6 mb12 wrap">
+              {[5000,10000,25000,50000].map(v=>(
+                <button key={v} onClick={()=>setAmt(String(v))} className={cx('btn btn-sm f1',String(v)===amt?'btn-primary':'btn-outline')} style={{justifyContent:'center'}}>{curr(v)}</button>
+              ))}
+            </div>
+            <input type="number" value={amt} onChange={e=>{setAmt(e.target.value);setApiErr('');}}
+              placeholder="Enter amount" style={{fontFamily:'JetBrains Mono',fontSize:22,fontWeight:700,marginBottom:12}}/>
+            {apiErr&&<div className="ierr mb12"><Icon n="alrt" size={13}/>{apiErr}</div>}
+            <button onClick={()=>doTxn(mode)} disabled={loading}
+              className={cx(mode==='deposit'?'btn-buy':'btn-sell')}
+              style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:8,borderRadius:'var(--r2)'}}>
+              {loading?<><span className="spin spin-sm" style={{borderTopColor:mode==='deposit'?'#060810':'#fff'}}/> Processing…</>:`Confirm ${mode}`}
+            </button>
+            <button className="btn btn-ghost" style={{width:'100%',marginTop:8,justifyContent:'center'}} onClick={()=>{setMode('');setApiErr('');}}>Cancel</button>
+          </div>
+        ) : (
+          <div className="card">
+            <div className="st mb10"><Icon n="chart" size={14}/>Balance History</div>
+            {txLoad ? <SkCard/> : txns.length ?
+              <div className="cw" style={{height:180}}><canvas ref={chartRef}/></div> :
+              <div className="empty" style={{height:180}}><div className="empty-icon"><Icon n="chart" size={30}/></div><div>No transaction history yet</div></div>
+            }
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="sh">
+          <div className="st"><Icon n="hist" size={14}/>Transaction History</div>
+          <button className="btn btn-sm btn-ghost row g5" onClick={refetchTx}><Icon n="ref" size={13}/>Refresh</button>
+        </div>
+        {txLoad ? <SkTable rows={6}/> : txns.length===0 ?
+          <div className="empty"><div className="empty-icon"><Icon n="wallet" size={36}/></div><div style={{fontWeight:600}}>No transactions yet</div></div> : (
+          <div className="ovx">
+            <table>
+              <thead><tr><th>ID</th><th>Type</th><th>Amount</th><th>Date & Time</th></tr></thead>
+              <tbody>
+                {txns.map((t,i)=>(
+                  <tr key={t.transaction_id} style={{animation:`fadeUp .25s ease ${i*30}ms both`}}>
+                    <td className="mono" style={{fontSize:11,color:'var(--text3)'}}>{t.transaction_id}</td>
+                    <td>
+                      <span className={`badge ${t.transaction_type==='CREDIT'?'bg':'br'}`}>
+                        {t.transaction_type==='CREDIT'?'▲ ':'▼ '}{t.transaction_type}
+                      </span>
+                    </td>
+                    <td className="mono" style={{fontWeight:700,color:t.transaction_type==='CREDIT'?'var(--green)':'var(--red)',fontSize:13}}>
+                      {t.transaction_type==='CREDIT'?'+':'-'}{curr(t.amount)}
+                    </td>
+                    <td style={{color:'var(--text3)',fontSize:12}}>{new Date(t.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   ORDERS & TRADES HISTORY PAGE
+════════════════════════════════════════════ */
+const HistoryPage = () => {
+  const { addNotif, refreshAll } = useApp();
+  const [tab,      setTab]     = useState('orders');
+  const [filter,   setFilter]  = useState('ALL');
+  const [sortDir,  setSortDir] = useState('desc');
+  const [cancelId, setCancelId]=useState(null);
+
+  const { data:oData, loading:oLoad, refetch:refetchO } = useData(
+    ()=>api.orders(filter==='ALL'?null:filter), [filter]
+  );
+  const { data:tData, loading:tLoad } = useData(()=>api.trades(),[]);
+
+  const rawOrders = oData?.orders||[];
+  const orders = useMemo(()=>[...rawOrders].sort((a,b)=>{
+    const ta=new Date(a.created_at).getTime(), tb=new Date(b.created_at).getTime();
+    return sortDir==='desc'?tb-ta:ta-tb;
+  }),[rawOrders,sortDir]);
+  const trades = tData?.trades||[];
+
+  // FIX: fetch ALL orders separately for accurate counts (filter only affects the list below)
+  const { data:allOData } = useData(()=>api.orders(null), []);
+  const allOrders = allOData?.orders||[];
+
+  const stats = {
+    total:     allOrders.length,
+    executed:  allOrders.filter(o=>String(o.status||o.order_status).toUpperCase()==='EXECUTED').length,
+    pending:   allOrders.filter(o=>String(o.status||o.order_status).toUpperCase()==='PENDING').length,
+    cancelled: allOrders.filter(o=>String(o.status||o.order_status).toUpperCase()==='CANCELLED').length,
+  };
+
+  const doCancel = async id => {
+    setCancelId(id);
+    try {
+      await api.cancelOrder(id);
+      addNotif({t:'info',title:'Order Cancelled',msg:`Order #${id} has been cancelled.`});
+      refetchO(); refreshAll();
+    } catch(e) { addNotif({t:'err',title:'Cancel Failed',msg:e.message}); }
+    finally { setCancelId(null); }
+  };
+
+  return (
+    <div className="fu">
+      <div className="ph"><div className="ph-title">Orders & Trades</div><div className="ph-sub">Order book, execution history, and trade records</div></div>
+      <div className="g4 mb24">
+        {[['Total',stats.total,'cb'],['Executed',stats.executed,'cg'],['Pending',stats.pending,'ca'],['Cancelled',stats.cancelled,'cp']].map(([l,v,c],i)=>(
+          <div key={l} className={`sc ${c}`} style={{'--d':`${i*60}ms`,animation:`fadeUp .3s ease ${i*60}ms both`}}>
+            <div className="sl">{l}</div>
+            <div className="sv" style={{fontSize:30}}>{v}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="tabs">
+        <div className={cx('tab',tab==='orders'&&'on')} onClick={()=>setTab('orders')}><Icon n="order" size={13}/>Orders</div>
+        <div className={cx('tab',tab==='trades'&&'on')} onClick={()=>setTab('trades')}><Icon n="hist"  size={13}/>Trades</div>
+      </div>
+
+      {tab==='orders'&&(
+        <div className="card fi">
+          <div className="sh">
+            <div className="st"><Icon n="order" size={14}/>Order Book</div>
+            <div className="row g6 wrap">
+              {['ALL','PENDING','EXECUTED','CANCELLED'].map(f=>(
+                <button key={f} onClick={()=>setFilter(f)} className={cx('btn btn-sm',filter===f?'btn-primary':'btn-outline')} style={{fontSize:11}}>{f}</button>
+              ))}
+              <button className="btn btn-sm btn-outline" onClick={()=>setSortDir(d=>d==='desc'?'asc':'desc')} title="Toggle sort">
+                <Icon n={sortDir==='desc'?'dn':'up'} size={12}/> {sortDir==='desc'?'Newest':'Oldest'}
+              </button>
+              <button className="btn btn-sm btn-ghost" onClick={refetchO}><Icon n="ref" size={13}/></button>
+            </div>
+          </div>
+          {oLoad ? <SkTable rows={5}/> : orders.length===0 ?
+            <div className="empty"><div className="empty-icon"><Icon n="order" size={36}/></div><div style={{fontWeight:600}}>No orders found</div><div style={{fontSize:12}}>Place a trade to see it here</div></div> : (
+            <div className="ovx">
+              <table>
+                <thead><tr><th>ID</th><th>Symbol</th><th>Type</th><th>Price Type</th><th>Qty</th><th>Price</th><th>Total</th><th>Status</th><th>Date</th><th></th></tr></thead>
+                <tbody>
+                  {orders.map((o,i)=>(
+                    <tr key={o.order_id} style={{animation:`fadeUp .25s ease ${i*25}ms both`}}>
+                      <td className="mono" style={{fontSize:11,color:'var(--text3)'}}>{o.order_id}</td>
+                      <td style={{fontWeight:700}}>{o.symbol}</td>
+                      <td><span className={`badge ${o.order_type==='BUY'?'bg':'br'}`}>{o.order_type}</span></td>
+                      <td><span className="badge bb" style={{fontSize:10}}>{o.price_type||'MARKET'}</span></td>
+                      <td className="mono">{o.quantity}</td>
+                      <td className="mono">{curr(o.order_price)}</td>
+                      <td className="mono" style={{fontWeight:600}}>{curr(o.total)}</td>
+                      <td>
+                        {(()=>{const st=String(o.status||o.order_status||'').toUpperCase();return(
+                        <span className={`badge ${st==='EXECUTED'?'bg':st==='PENDING'?'bb':'ba'}`}>
+                          {st==='EXECUTED'&&'✓ '}{st}
+                        </span>
+                        );})()}
+                      </td>
+                      <td style={{fontSize:11,color:'var(--text3)'}}>{new Date(o.created_at).toLocaleString()}</td>
+                      <td>
+                        {String(o.status||o.order_status||'').toUpperCase()==='PENDING'&&(
+                          <button className="btn btn-xs btn-outline" style={{color:'var(--red)',borderColor:'rgba(255,61,107,.3)',fontSize:11}}
+                            onClick={()=>doCancel(o.order_id)} disabled={cancelId===o.order_id}>
+                            {cancelId===o.order_id?<span className="spin spin-sm"/>:'Cancel'}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab==='trades'&&(
+        <div className="card fi">
+          <div className="st mb18"><Icon n="hist" size={14}/>Executed Trades</div>
+          {tLoad ? <SkTable rows={5}/> : trades.length===0 ?
+            <div className="empty"><div className="empty-icon"><Icon n="hist" size={36}/></div><div style={{fontWeight:600}}>No trades yet</div></div> : (
+            <div className="ovx">
+              <table>
+                <thead><tr><th>Trade ID</th><th>Symbol</th><th>Type</th><th>Qty</th><th>Price</th><th>Total</th><th>P&L</th><th>Executed At</th></tr></thead>
+                <tbody>
+                  {trades.map((t,i)=>{
+                    const pnl=parseFloat(t.pnl||0);
+                    return (
+                      <tr key={`${t.order_id}_${t.trade_id}`} style={{animation:`fadeUp .25s ease ${i*30}ms both`}}>
+                        <td className="mono" style={{fontSize:11,color:'var(--accent)'}}>{t.trade_id}</td>
+                        <td style={{fontWeight:700}}>{t.symbol}</td>
+                        <td><span className={`badge ${t.trade_type==='BUY'?'bg':'br'}`}>{t.trade_type}</span></td>
+                        <td className="mono">{t.qty}</td>
+                        <td className="mono">{curr(t.price)}</td>
+                        <td className="mono" style={{fontWeight:600}}>{curr(t.total)}</td>
+                        <td>
+                          {t.trade_type==='SELL' ? (
+                            <span className="mono" style={{fontWeight:700,color:pnl>=0?'var(--green)':'var(--red)'}}>
+                              {pnl>=0?'+':''}{curr(pnl)}
+                            </span>
+                          ) : <span style={{color:'var(--text3)'}}>—</span>}
+                        </td>
+                        <td style={{fontSize:11,color:'var(--text3)'}}>{new Date(t.executed_at).toLocaleString()}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   ADMIN PANEL PAGE
+════════════════════════════════════════════ */
+const AdminPage = () => {
+  const { user, addNotif } = useApp();
+  if (user?.role !== 'ADMIN') return (
+    <div className="fu col" style={{alignItems:'center',justifyContent:'center',minHeight:'70vh',gap:16}}>
+      <Icon n="lock" size={56} color="var(--red)"/>
+      <div className="syne" style={{fontSize:22,fontWeight:800}}>Access Denied</div>
+      <div style={{color:'var(--text3)',textAlign:'center',maxWidth:300}}>This section requires ADMIN role.</div>
+    </div>
+  );
+
+  const [tab, setTab] = useState('dashboard');
+
+  /* ── DATA HOOKS ── */
+  const { data: statsData, loading: stLoad, refetch: refStats } = useData(()=>api.adminStats(), []);
+  const [uSearch, setUSearch] = useState('');
+  const [uRole,   setURole]   = useState('ALL');
+  const [uActive, setUActive] = useState('ALL');
+  const { data: usersData, loading: usLoad, refetch: refUsers } = useData(
+    ()=>api.adminUsers({ search: uSearch||undefined, role: uRole!=='ALL'?uRole:undefined, is_active: uActive!=='ALL'?uActive:undefined }),
+    [uSearch, uRole, uActive]
+  );
+  const [oStatus, setOStatus] = useState('ALL');
+  const { data: ordersData, loading: orLoad, refetch: refOrders } = useData(
+    ()=>api.adminOrders({ status: oStatus!=='ALL'?oStatus:undefined }),
+    [oStatus]
+  );
+  const { data: tradesData, loading: trLoad, refetch: refTrades } = useData(()=>api.adminTrades(), []);
+  const [auDays, setAuDays]   = useState('7');
+  const [auAct,  setAuAct]    = useState('ALL');
+  const { data: auditData, loading: auLoad, refetch: refAudit } = useData(
+    ()=>api.adminAudit({ days: auDays, action: auAct!=='ALL'?auAct:undefined }),
+    [auDays, auAct]
+  );
+  const { data: cfgData,  loading: cfLoad, refetch: refCfg }   = useData(()=>api.adminConfig(), []);
+  const { data: insData,  loading: inLoad }                     = useData(()=>api.adminInsights(), []);
+
+  const stats   = statsData || {};
+  const users   = usersData?.users   || [];
+  const orders  = ordersData?.orders || [];
+  const trades  = tradesData?.trades || [];
+  const logs    = auditData?.logs    || [];
+  const config  = cfgData?.config    || [];
+  const insights = insData || {};
+
+  /* ── CONFIG EDIT ── */
+  const [cfgEdits, setCfgEdits] = useState({});
+  const saveConfig = async (key) => {
+    try {
+      await api.updateConfig(key, cfgEdits[key]);
+      addNotif({ type:'success', msg:`Config "${key}" updated.` });
+      refCfg();
+    } catch(e) { addNotif({ type:'error', msg: e.message }); }
+  };
+
+  /* ── USER ROLE / ACTIVATE ── */
+  const changeUserRole = async (userId, role) => {
+    try {
+      await api.updateUser(userId, { role });
+      addNotif({ type:'success', msg:`Role updated to ${role}.` });
+      refUsers();
+    } catch(e) { addNotif({ type:'error', msg: e.message }); }
+  };
+  const toggleUserActive = async (userId, isActive) => {
+    try {
+      await api.updateUser(userId, { is_active: !isActive });
+      addNotif({ type:'success', msg: isActive ? 'User deactivated.' : 'User activated.' });
+      refUsers();
+    } catch(e) { addNotif({ type:'error', msg: e.message }); }
+  };
+
+  const TABS = [
+    { id:'dashboard', label:'Dashboard',  icon:'home'   },
+    { id:'users',     label:'Users',      icon:'shld'   },
+    { id:'companies', label:'Companies',  icon:'db'     },
+    { id:'insights',  label:'Insights',   icon:'chart'  },
+    { id:'orders',    label:'Orders',     icon:'order'  },
+    { id:'trades',    label:'Trades',     icon:'hist'   },
+    { id:'audit',     label:'Audit Logs', icon:'logs'   },
+    { id:'config',    label:'Config',     icon:'db'     },
+  ];
+
+  return (
+    <div className="fu">
+      <div className="ph">
+        <div className="ph-title">Admin Panel</div>
+        <div className="ph-sub">Full platform management — users, orders, audit, config</div>
+      </div>
+
+      <div className="tabs">
+        {TABS.map(t=>(
+          <div key={t.id} className={cx('tab',tab===t.id&&'on')} onClick={()=>setTab(t.id)}>
+            <Icon n={t.icon} size={13}/>{t.label}
+          </div>
+        ))}
+      </div>
+
+      {/* ── DASHBOARD ── */}
+      {tab==='dashboard'&&(
+        <div className="fu" style={{animation:'fadeUp .3s ease both'}}>
+          {stLoad ? (
+            <div className="g4 mb24">{[0,1,2,3].map(i=><div key={i} className="sc"><div className="sk-line" style={{height:24,width:'60%'}}/><div className="sk-line mt8" style={{height:36}}/></div>)}</div>
+          ) : (
+            <div className="g4 mb24">
+              {[
+                {l:'Total Users',      v:stats.total_users,      c:'cb', s:`${stats.active_users||0} active`},
+                {l:'Total Orders',     v:stats.total_orders,     c:'cg', s:`${stats.executed_orders||0} executed`},
+                {l:'Total Trades',     v:stats.total_trades,     c:'ca', s:'all time'},
+                {l:'Platform Volume',  v:curr(stats.total_volume||0), c:'cp', s:'total trade value'},
+                {l:'Wallet Balances',  v:curr(stats.total_wallet_bal||0), c:'cg', s:'all users combined'},
+                {l:'Active Stocks',    v:stats.active_stocks,    c:'cb', s:'currently listed'},
+                {l:'Pending Orders',   v:stats.pending_orders,   c:'cr', s:'awaiting execution'},
+                {l:'Audit Events 24h', v:stats.audit_events_24h, c:'ca', s:'last 24 hours'},
+              ].map((s,i)=>(
+                <div key={i} className={`sc ${s.c}`} style={{animation:`fadeUp .3s ease ${i*50}ms both`}}>
+                  <div className="sl">{s.l}</div>
+                  <div className="sv" style={{fontSize:22}}>{s.v ?? '—'}</div>
+                  <div className="ss">{s.s}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Recent Orders table */}
+          <div className="card mb24">
+            <div className="sh mb16">
+              <div className="st"><Icon n="order" size={14}/>Recent Orders</div>
+              <button className="btn btn-sm btn-ghost" onClick={refOrders}><Icon n="ref" size={13}/></button>
+            </div>
+            {orLoad ? <SkTable rows={5}/> : (
+              <div className="ovx">
+                <table>
+                  <thead><tr>
+                    <th>User</th><th>Stock</th><th>Type</th><th>Qty</th><th>Price</th><th>Total</th><th>Status</th><th>Date</th>
+                  </tr></thead>
+                  <tbody>
+                    {orders.slice(0,10).map(o=>(
+                      <tr key={o.order_id}>
+                        <td>{o.user_name}</td>
+                        <td><span className="mono" style={{color:'var(--text)'}}>{o.symbol}</span></td>
+                        <td><span className={`badge ${o.order_type==='BUY'?'bg':'br'}`}>{o.order_type}</span></td>
+                        <td>{o.quantity}</td>
+                        <td>{curr(o.price||o.order_price)}</td>
+                        <td>{curr(o.total||o.total_value)}</td>
+                        <td><span className={`badge ${o.order_status==='EXECUTED'?'bg':o.order_status==='PENDING'?'ba':'br'}`}>{o.order_status||o.status}</span></td>
+                        <td style={{fontSize:11,color:'var(--text3)'}}>{new Date(o.created_at).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    {orders.length===0&&<tr><td colSpan={8}><div className="empty"><div className="empty-icon"><Icon n="order" size={28}/></div><div>No orders yet</div></div></td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── USERS ── */}
+      {tab==='users'&&(
+        <div className="fu" style={{animation:'fadeUp .3s ease both'}}>
+          <div className="card">
+            <div className="sh mb16">
+              <div className="st"><Icon n="shld" size={14}/>User Management</div>
+              <button className="btn btn-sm btn-ghost" onClick={refUsers}><Icon n="ref" size={13}/></button>
+            </div>
+            <div className="row g8 mb16 wrap">
+              <input style={{maxWidth:220}} placeholder="Search name or email…" value={uSearch} onChange={e=>setUSearch(e.target.value)}/>
+              <select style={{width:120}} value={uRole} onChange={e=>setURole(e.target.value)}>
+                {['ALL','USER','ADMIN','TRADER','ANALYST'].map(r=><option key={r}>{r}</option>)}
+              </select>
+              <select style={{width:140}} value={uActive} onChange={e=>setUActive(e.target.value)}>
+                <option value="ALL">All Status</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+            {usLoad ? <SkTable rows={8}/> : (
+              <div className="ovx">
+                <table>
+                  <thead><tr>
+                    <th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Wallet</th><th>Orders</th><th>Actions</th>
+                  </tr></thead>
+                  <tbody>
+                    {users.map(u=>(
+                      <tr key={u.user_id}>
+                        <td style={{color:'var(--text3)',fontSize:11}}>{u.user_id}</td>
+                        <td style={{fontWeight:600}}>{u.name}</td>
+                        <td style={{fontSize:12,color:'var(--text2)'}}>{u.email}</td>
+                        <td>
+                          <select
+                            value={u.role}
+                            style={{width:110,padding:'4px 8px',fontSize:12}}
+                            onChange={e=>changeUserRole(u.user_id, e.target.value)}
+                          >
+                            {['USER','ADMIN','TRADER','ANALYST'].map(r=><option key={r}>{r}</option>)}
+                          </select>
+                        </td>
+                        <td>
+                          <span className={`badge ${u.is_active?'bg':'br'}`}>
+                            {u.is_active?'Active':'Inactive'}
+                          </span>
+                        </td>
+                        <td className="mono" style={{fontSize:12}}>{curr(u.wallet_balance||0)}</td>
+                        <td style={{fontSize:12}}>{u.total_orders||0}</td>
+                        <td>
+                          <button
+                            className={`btn btn-xs ${u.is_active?'btn-outline':'btn-primary'}`}
+                            onClick={()=>toggleUserActive(u.user_id, u.is_active)}
+                          >
+                            {u.is_active?'Deactivate':'Activate'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {users.length===0&&<tr><td colSpan={8}><div className="empty"><div className="empty-icon"><Icon n="shld" size={28}/></div><div>No users found</div></div></td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── COMPANIES ── */}
+      {tab==='companies'&&(
+        <div className="fu" style={{animation:'fadeUp .3s ease both'}}>
+          <AdminCompaniesTab/>
+        </div>
+      )}
+
+      {/* ── INSIGHTS ── */}
+      {tab==='insights'&&(
+        <div className="fu" style={{animation:'fadeUp .3s ease both'}}>
+          <div className="g2 mb24">
+            <div className="card">
+              <div className="st mb16"><Icon n="chart" size={14}/>Most Traded Stocks</div>
+              {inLoad ? <SkTable rows={5}/> : (
+                <table>
+                  <thead><tr><th>Symbol</th><th>Company</th><th>Trades</th><th>Shares</th><th>Value</th></tr></thead>
+                  <tbody>
+                    {(insights.most_traded||[]).map((s,i)=>(
+                      <tr key={i}>
+                        <td className="mono" style={{fontWeight:700,color:'var(--text)'}}>{s.symbol}</td>
+                        <td style={{fontSize:12}}>{s.company_name}</td>
+                        <td>{s.trade_count}</td>
+                        <td>{(s.total_shares||0).toLocaleString()}</td>
+                        <td className="mono">{curr(s.total_value)}</td>
+                      </tr>
+                    ))}
+                    {!(insights.most_traded?.length)&&<tr><td colSpan={5}><div className="empty" style={{padding:16}}><div>No trades yet</div></div></td></tr>}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <div className="card">
+              <div className="st mb16"><Icon n="chart" size={14}/>Daily Volume (7 days)</div>
+              {inLoad ? <div className="sk-line" style={{height:120}}/> : (
+                <table>
+                  <thead><tr><th>Date</th><th>Trades</th><th>Shares</th><th>Volume</th></tr></thead>
+                  <tbody>
+                    {(insights.daily_volume||[]).map((d,i)=>(
+                      <tr key={i}>
+                        <td style={{fontSize:12}}>{new Date(d.trade_date).toLocaleDateString()}</td>
+                        <td>{d.trades}</td>
+                        <td>{(d.shares||0).toLocaleString()}</td>
+                        <td className="mono">{curr(d.volume)}</td>
+                      </tr>
+                    ))}
+                    {!(insights.daily_volume?.length)&&<tr><td colSpan={4}><div className="empty" style={{padding:16}}><div>No data</div></div></td></tr>}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+          <div className="g2">
+            <div className="card">
+              <div className="st mb16" style={{color:'var(--green)'}}><Icon n="chart" size={14}/>Top Gainers (1-day)</div>
+              {inLoad ? <SkTable rows={5}/> : (
+                <table>
+                  <thead><tr><th>Symbol</th><th>Price</th><th>Change</th></tr></thead>
+                  <tbody>
+                    {(insights.top_gainers||[]).map((s,i)=>(
+                      <tr key={i}>
+                        <td className="mono" style={{fontWeight:700}}>{s.symbol}</td>
+                        <td className="mono">{curr(s.current_price)}</td>
+                        <td className="pos mono">▲ {s.change_pct}%</td>
+                      </tr>
+                    ))}
+                    {!(insights.top_gainers?.length)&&<tr><td colSpan={3}><div className="empty" style={{padding:16}}><div>No data</div></div></td></tr>}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <div className="card">
+              <div className="st mb16" style={{color:'var(--red)'}}><Icon n="chart" size={14}/>Top Losers (1-day)</div>
+              {inLoad ? <SkTable rows={5}/> : (
+                <table>
+                  <thead><tr><th>Symbol</th><th>Price</th><th>Change</th></tr></thead>
+                  <tbody>
+                    {(insights.top_losers||[]).map((s,i)=>(
+                      <tr key={i}>
+                        <td className="mono" style={{fontWeight:700}}>{s.symbol}</td>
+                        <td className="mono">{curr(s.current_price)}</td>
+                        <td className="neg mono">▼ {Math.abs(s.change_pct)}%</td>
+                      </tr>
+                    ))}
+                    {!(insights.top_losers?.length)&&<tr><td colSpan={3}><div className="empty" style={{padding:16}}><div>No data</div></div></td></tr>}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ALL ORDERS ── */}
+      {tab==='orders'&&(
+        <div className="fu" style={{animation:'fadeUp .3s ease both'}}>
+          <div className="card">
+            <div className="sh mb16">
+              <div className="st"><Icon n="order" size={14}/>All Orders</div>
+              <div className="row g6 wrap">
+                {['ALL','EXECUTED','PENDING','CANCELLED'].map(s=>(
+                  <button key={s} onClick={()=>setOStatus(s)} className={cx('btn btn-sm',oStatus===s?'btn-primary':'btn-outline')} style={{fontSize:11}}>{s}</button>
+                ))}
+                <button className="btn btn-sm btn-ghost" onClick={refOrders}><Icon n="ref" size={13}/></button>
+              </div>
+            </div>
+            {orLoad ? <SkTable rows={8}/> : (
+              <div className="ovx">
+                <table>
+                  <thead><tr>
+                    <th>#</th><th>User</th><th>Stock</th><th>Type</th><th>Qty</th><th>Price</th><th>Total</th><th>Status</th><th>Date</th>
+                  </tr></thead>
+                  <tbody>
+                    {orders.map(o=>(
+                      <tr key={o.order_id}>
+                        <td style={{color:'var(--text3)',fontSize:11}}>{o.order_id}</td>
+                        <td style={{fontSize:12}}>{o.user_name}</td>
+                        <td><span className="mono" style={{fontWeight:700}}>{o.symbol}</span></td>
+                        <td><span className={`badge ${o.order_type==='BUY'?'bg':'br'}`}>{o.order_type}</span></td>
+                        <td>{o.quantity}</td>
+                        <td className="mono">{curr(o.price||o.order_price)}</td>
+                        <td className="mono">{curr(o.total||o.total_value)}</td>
+                        <td><span className={`badge ${o.order_status==='EXECUTED'?'bg':o.order_status==='PENDING'?'ba':'br'}`}>{o.order_status||o.status}</span></td>
+                        <td style={{fontSize:11,color:'var(--text3)'}}>{new Date(o.created_at).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    {orders.length===0&&<tr><td colSpan={9}><div className="empty"><div className="empty-icon"><Icon n="order" size={28}/></div><div>No orders</div></div></td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── ALL TRADES ── */}
+      {tab==='trades'&&(
+        <div className="fu" style={{animation:'fadeUp .3s ease both'}}>
+          <div className="card">
+            <div className="sh mb16">
+              <div className="st"><Icon n="hist" size={14}/>All Trades</div>
+              <button className="btn btn-sm btn-ghost" onClick={refTrades}><Icon n="ref" size={13}/></button>
+            </div>
+            {trLoad ? <SkTable rows={8}/> : (
+              <div className="ovx">
+                <table>
+                  <thead><tr>
+                    <th>#</th><th>User</th><th>Stock</th><th>Type</th><th>Qty</th><th>Price</th><th>Total</th><th>Executed At</th>
+                  </tr></thead>
+                  <tbody>
+                    {trades.map(t=>(
+                      <tr key={t.trade_id}>
+                        <td style={{color:'var(--text3)',fontSize:11}}>{t.trade_id}</td>
+                        <td style={{fontSize:12}}>{t.user_name}</td>
+                        <td><span className="mono" style={{fontWeight:700}}>{t.symbol}</span></td>
+                        <td><span className={`badge ${t.trade_type==='BUY'?'bg':'br'}`}>{t.trade_type}</span></td>
+                        <td>{t.quantity}</td>
+                        <td className="mono">{curr(t.price)}</td>
+                        <td className="mono">{curr(t.total_value)}</td>
+                        <td style={{fontSize:11,color:'var(--text3)'}}>{new Date(t.executed_at).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    {trades.length===0&&<tr><td colSpan={8}><div className="empty"><div className="empty-icon"><Icon n="hist" size={28}/></div><div>No trades</div></div></td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── AUDIT LOGS ── */}
+      {tab==='audit'&&(
+        <div className="fu" style={{animation:'fadeUp .3s ease both'}}>
+          <div className="card">
+            <div className="sh mb16">
+              <div className="st"><Icon n="logs" size={14}/>Audit Log</div>
+              <div className="row g6 wrap">
+                {['7','14','30','90'].map(d=>(
+                  <button key={d} onClick={()=>setAuDays(d)} className={cx('btn btn-sm',auDays===d?'btn-primary':'btn-outline')} style={{fontSize:11}}>{d}d</button>
+                ))}
+                <select style={{width:180,padding:'4px 8px',fontSize:12}} value={auAct} onChange={e=>setAuAct(e.target.value)}>
+                  <option value="ALL">All Actions</option>
+                  {['LOGIN','LOGOUT','BUY_ORDER_EXECUTED','SELL_ORDER_EXECUTED','USER_ROLE_CHANGED','USER_ACTIVATED','USER_DEACTIVATED','WALLET_CREDIT','WALLET_DEBIT','CONFIG_UPDATED'].map(a=>(
+                    <option key={a}>{a}</option>
+                  ))}
+                </select>
+                <button className="btn btn-sm btn-ghost" onClick={refAudit}><Icon n="ref" size={13}/></button>
+              </div>
+            </div>
+            {auLoad ? <SkTable rows={8}/> : (
+              <div className="ovx">
+                <table>
+                  <thead><tr>
+                    <th>#</th><th>User</th><th>Action</th><th>Resource</th><th>Status</th><th>Details</th><th>Time</th>
+                  </tr></thead>
+                  <tbody>
+                    {logs.map(l=>(
+                      <tr key={l.audit_id}>
+                        <td style={{color:'var(--text3)',fontSize:11}}>{l.audit_id}</td>
+                        <td style={{fontSize:12}}>{l.user_name||l.user_id||'—'}</td>
+                        <td><span className="mono" style={{fontSize:11,color:'var(--blue)'}}>{l.action}</span></td>
+                        <td style={{fontSize:11,color:'var(--text3)'}}>{l.resource}{l.resource_id?` #${l.resource_id}`:''}</td>
+                        <td><span className={`badge ${l.status==='SUCCESS'?'bg':'br'}`}>{l.status}</span></td>
+                        <td style={{fontSize:11,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--text3)'}}>
+                          {l.details ? JSON.stringify(l.details).slice(0,80) : '—'}
+                        </td>
+                        <td style={{fontSize:11,color:'var(--text3)',whiteSpace:'nowrap'}}>{new Date(l.created_at).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    {logs.length===0&&<tr><td colSpan={7}><div className="empty"><div className="empty-icon"><Icon n="logs" size={28}/></div><div>No audit events</div></div></td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── SYSTEM CONFIG ── */}
+      {tab==='config'&&(
+        <div className="fu" style={{animation:'fadeUp .3s ease both'}}>
+          <div className="card">
+            <div className="sh mb16">
+              <div className="st"><Icon n="db" size={14}/>System Configuration</div>
+              <button className="btn btn-sm btn-ghost" onClick={refCfg}><Icon n="ref" size={13}/></button>
+            </div>
+            {cfLoad ? <SkTable rows={6}/> : (
+              <div className="ovx">
+                <table>
+                  <thead><tr><th>Key</th><th>Type</th><th>Description</th><th>Value</th><th></th></tr></thead>
+                  <tbody>
+                    {config.map(c=>(
+                      <tr key={c.config_key}>
+                        <td><span className="mono" style={{fontSize:12,color:'var(--text)'}}>{c.config_key}</span></td>
+                        <td><span className="badge bb" style={{fontSize:10}}>{c.data_type}</span></td>
+                        <td style={{fontSize:12,color:'var(--text3)',maxWidth:220}}>{c.description}</td>
+                        <td>
+                          <input
+                            style={{width:160,padding:'5px 10px',fontSize:12}}
+                            defaultValue={c.config_value}
+                            onChange={e=>setCfgEdits(prev=>({...prev,[c.config_key]:e.target.value}))}
+                          />
+                        </td>
+                        <td>
+                          <button
+                            className="btn btn-xs btn-primary"
+                            disabled={cfgEdits[c.config_key]===undefined||cfgEdits[c.config_key]===c.config_value}
+                            onClick={()=>saveConfig(c.config_key)}
+                          >Save</button>
+                        </td>
+                      </tr>
+                    ))}
+                    {config.length===0&&<tr><td colSpan={5}><div className="empty"><div className="empty-icon"><Icon n="db" size={28}/></div><div>No config entries</div></div></td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   ADMIN LOGS PAGE
+════════════════════════════════════════════ */
+const LogsPage = () => {
+  const { user } = useApp();
+  if (user?.role !== 'ADMIN') return (
+    <div className="fu col" style={{alignItems:'center',justifyContent:'center',minHeight:'70vh',gap:16}}>
+      <Icon n="lock" size={56} color="var(--red)"/>
+      <div className="syne" style={{fontSize:22,fontWeight:800}}>Access Denied</div>
+      <div style={{color:'var(--text3)',textAlign:'center',maxWidth:300}}>This section requires ADMIN role. Contact your administrator.</div>
+    </div>
+  );
+
+  const [tab,    setTab]    = useState('logs');
+  const [lf,     setLf]     = useState('ALL');
+  const { data:lData,  loading:lLoad,  refetch:refL }  = useData(()=>api.adminLogs(lf),  [lf]);
+  const { data:dtData, loading:dtLoad, refetch:refDt } = useData(()=>api.adminDbTxns(), []);
+  const { data:lkData, loading:lkLoad, refetch:refLk } = useData(()=>api.adminLocks(),  []);
+  const { data:stats }                                  = useData(()=>api.adminStats(),  []);
+
+  const logs   = lData?.logs||[];
+  const dbTxns = dtData?.transactions||[];
+  const locks  = lkData?.locks||[];
+  const liveL  = lkData?.live_locks||[];
+
+  return (
+    <div className="fu">
+      <div className="ph"><div className="ph-title">System Logs & DB Inspector</div><div className="ph-sub">Admin visibility — operations, transactions, and locks</div></div>
+
+      {stats&&(
+        <div className="g4 mb24">
+          {[
+            {l:'Total Users',      v:stats.total_users,     c:'cb'},
+            {l:'Executed Orders',  v:stats.executed_orders, c:'cg'},
+            {l:'Total Volume',     raw:curr(stats.total_volume||0), c:'ca'},
+            {l:'Failed Operations',v:stats.error_logs,      c:'cr'},
+          ].map((s,i)=>(
+            <div key={i} className={`sc ${s.c}`} style={{'--d':`${i*60}ms`,animation:`fadeUp .3s ease ${i*60}ms both`}}>
+              <div className="sl">{s.l}</div>
+              <div className="sv" style={{fontSize:22}}>{s.raw||s.v}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="tabs">
+        <div className={cx('tab',tab==='logs'&&'on')}   onClick={()=>setTab('logs')}><Icon n="logs" size={13}/>App Logs</div>
+        <div className={cx('tab',tab==='db'&&'on')}     onClick={()=>setTab('db')}><Icon n="db" size={13}/>DB Transactions</div>
+        <div className={cx('tab',tab==='locks'&&'on')}  onClick={()=>setTab('locks')}><Icon n="lock" size={13}/>Locks</div>
+      </div>
+
+      {tab==='logs'&&(
+        <div className="card fi">
+          <div className="sh">
+            <div className="st"><Icon n="logs" size={14}/>Application Logs</div>
+            <div className="row g6 wrap">
+              {['ALL','SUCCESS','FAILED'].map(f=>(
+                <button key={f} onClick={()=>setLf(f)} className={cx('btn btn-sm',lf===f?'btn-primary':'btn-outline')} style={{fontSize:11}}>{f}</button>
+              ))}
+              <button className="btn btn-sm btn-ghost" onClick={refL}><Icon n="ref" size={13}/></button>
+            </div>
+          </div>
+          {lLoad ? <SkTable rows={6}/> : logs.length===0 ?
+            <div className="empty"><div className="empty-icon"><Icon n="logs" size={36}/></div><div style={{fontWeight:600}}>No logs found</div></div> : (
+            <div style={{fontFamily:'JetBrains Mono',fontSize:12,display:'flex',flexDirection:'column',gap:3}}>
+              {logs.map((l,i)=>{
+                const ok=l.status?.toUpperCase()==='SUCCESS';
+                return (
+                  <div key={l.log_id} style={{
+                    display:'flex',gap:10,padding:'9px 12px',borderRadius:'var(--r)',
+                    background:'var(--bg3)',
+                    borderLeft:`3px solid ${ok?'var(--green)':'var(--red)'}`,
+                    alignItems:'flex-start',flexWrap:'wrap',gap:8,
+                    animation:`fadeUp .25s ease ${i*20}ms both`,
+                  }}>
+                    <span style={{color:'var(--text3)',flexShrink:0,fontSize:10,paddingTop:1}}>{new Date(l.timestamp).toLocaleString()}</span>
+                    <span className={`badge ${ok?'bg':'br'}`}>{l.status}</span>
+                    {l.user_name&&<span style={{color:'var(--purple)',flexShrink:0}}>[{l.user_name}]</span>}
+                    <span style={{color:'var(--text2)',wordBreak:'break-all',flex:1}}>{l.operation}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab==='db'&&(
+        <div className="fi">
+          <div className="card mb16">
+            <div className="sh">
+              <div className="st"><Icon n="db" size={14}/>DB Transaction Log</div>
+              <button className="btn btn-sm btn-ghost" onClick={refDt}><Icon n="ref" size={13}/></button>
+            </div>
+            {dtLoad ? <SkTable rows={5}/> : dbTxns.length===0 ?
+              <div className="empty"><div className="empty-icon"><Icon n="db" size={36}/></div><div style={{fontWeight:600}}>No DB transactions recorded</div></div> : (
+              <div className="ovx">
+                <table>
+                  <thead><tr><th>TXN ID</th><th>User</th><th>State</th><th>Duration</th><th>Start</th><th>End</th></tr></thead>
+                  <tbody>
+                    {dbTxns.map((t,i)=>{
+                      const stok=t.txn_state==='COMMITTED';
+                      return (
+                        <tr key={t.txn_id} style={{animation:`fadeUp .25s ease ${i*30}ms both`}}>
+                          <td className="mono" style={{color:'var(--amber)',fontWeight:600}}>{t.txn_id}</td>
+                          <td style={{fontSize:12}}>{t.user_name||t.user_id||'—'}</td>
+                          <td><span className={`badge ${stok?'bg':t.txn_state==='ACTIVE'?'ba':'br'}`}>{t.txn_state}</span></td>
+                          <td className="mono" style={{fontSize:12}}>{t.duration_ms?Math.round(t.duration_ms)+'ms':'—'}</td>
+                          <td style={{fontSize:11,color:'var(--text3)'}}>{new Date(t.start_time).toLocaleString()}</td>
+                          <td style={{fontSize:11,color:'var(--text3)'}}>{t.end_time?new Date(t.end_time).toLocaleString():'—'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+          <div className="card">
+            <div className="st mb12">Transaction Flow Sequence</div>
+            <div style={{display:'flex',alignItems:'center',overflowX:'auto',padding:'8px 0',gap:0}}>
+              {['BEGIN','LOCK','VALIDATE','EXECUTE','COMMIT/ROLLBACK','RELEASE','END'].map((s,i,a)=>(
+                <React.Fragment key={s}>
+                  <div style={{
+                    background:'var(--surface2)',border:'1px solid var(--border2)',borderRadius:'var(--r)',
+                    padding:'9px 12px',whiteSpace:'nowrap',fontSize:11,fontWeight:700,textAlign:'center',minWidth:96,
+                    color:i===4?'var(--green)':i===0||i===6?'var(--text3)':'var(--text)',
+                  }}>
+                    <div style={{fontSize:9,color:'var(--text3)',marginBottom:2}}>STEP {i+1}</div>{s}
+                  </div>
+                  {i<a.length-1&&<div style={{color:'var(--text3)',fontSize:16,padding:'0 2px',flexShrink:0}}>→</div>}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab==='locks'&&(
+        <div className="fi">
+          <div className="card mb16">
+            <div className="sh">
+              <div className="st"><Icon n="lock" size={14}/>Lock Records</div>
+              <div className="row g6">
+                <span className="badge bg"><span className="dot" style={{width:5,height:5,marginRight:4}}/>Live</span>
+                <button className="btn btn-sm btn-ghost" onClick={refLk}><Icon n="ref" size={13}/></button>
+              </div>
+            </div>
+            {lkLoad ? <SkTable rows={4}/> : (
+              <div className="ovx">
+                <table>
+                  <thead><tr><th>Lock ID</th><th>TXN</th><th>Resource</th><th>Mode</th><th>State</th><th>User</th></tr></thead>
+                  <tbody>
+                    {locks.map((l,i)=>(
+                      <tr key={l.lock_id} style={{animation:`fadeUp .25s ease ${i*30}ms both`}}>
+                        <td className="mono" style={{color:'var(--purple)',fontWeight:600}}>{l.lock_id}</td>
+                        <td className="mono">{l.txn_id}</td>
+                        <td style={{fontFamily:'JetBrains Mono',fontWeight:600}}>{l.resource_type}</td>
+                        <td><span className={`badge ${l.lock_mode==='EXCLUSIVE'?'br':'bg'}`}>{l.lock_mode}</span></td>
+                        <td><span className={`badge ${l.txn_state==='COMMITTED'?'bg':l.txn_state==='ACTIVE'?'ba':'br'}`}>{l.txn_state||'—'}</span></td>
+                        <td style={{fontSize:12}}>{l.user_name||'—'}</td>
+                      </tr>
+                    ))}
+                    {!locks.length&&<tr><td colSpan={6}><div className="empty"><div className="empty-icon"><Icon n="lock" size={30}/></div><div>No lock records</div></div></td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+          {liveL.length>0&&(
+            <div className="card mb16">
+              <div className="st mb12"><span className="dot" style={{marginRight:6}}/>Live PostgreSQL Locks</div>
+              <div className="ovx">
+                <table>
+                  <thead><tr><th>PID</th><th>Table</th><th>Mode</th><th>Granted</th><th>Blocked By</th></tr></thead>
+                  <tbody>
+                    {liveL.map((l,i)=>(
+                      <tr key={i}>
+                        <td className="mono">{l.pid}</td>
+                        <td className="mono" style={{fontWeight:600}}>{l.table_name}</td>
+                        <td><span className="badge bb" style={{fontSize:10}}>{l.mode}</span></td>
+                        <td><span className={`badge ${l.granted?'bg':'br'}`}>{l.granted?'✓ Yes':'✗ No'}</span></td>
+                        <td className="mono" style={{fontSize:11}}>{l.blocked_by?.length?l.blocked_by.join(', '):'None'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          <div className="g2">
+            <div className="card">
+              <div className="st mb12">Lock Modes</div>
+              {[['SHARED','Multiple readers simultaneously allowed','bg'],['EXCLUSIVE','Single writer — blocks all other access','br']].map(([n,d,c])=>(
+                <div key={n} className="row g10 mb10" style={{alignItems:'flex-start'}}>
+                  <span className={`badge ${c}`} style={{flexShrink:0}}>{n}</span>
+                  <span style={{color:'var(--text3)',fontSize:12}}>{d}</span>
+                </div>
+              ))}
+            </div>
+            <div className="card">
+              <div className="st mb12">Available DB Functions</div>
+              <div style={{fontFamily:'JetBrains Mono',fontSize:11,color:'var(--green)',background:'var(--bg3)',borderRadius:'var(--r)',padding:14,lineHeight:2}}>
+                GetPortfolioValue(user_id)<br/>
+                GetProfitLoss(user_id)<br/>
+                GetUserDashboard(user_id)<br/>
+                GetWalletSummary(user_id)<br/>
+                GetUserOrderSummary(user_id)<br/>
+                CreditWallet / DebitWallet<br/>
+                PlaceOrder / ExecuteTrade<br/>
+                UpdatePortfolio<br/>
+                AcquireLock / ReleaseLock
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   ROOT APP
+════════════════════════════════════════════ */
+/* ════════════════════════════════════════════
+   COMPANY DASHBOARD
+════════════════════════════════════════════ */
+const CompanyDashboard = () => {
+  const { user } = useApp();
+  const chartRef  = useRef(null);
+  const chartInst = useRef(null);
+  const { data: ovData, loading: ovLoad } = useData(()=>api.companyStockOverview(), []);
+  const { data: hData }                   = useData(()=>api.companyStockHistory(30), []);
+
+  const overview   = ovData?.overview   || {};
+  const sentiment  = ovData?.sentiment  || {};
+  const history    = hData?.history     || [];
+
+  useEffect(()=>{
+    if (!chartRef.current || !history.length) return;
+    if (chartInst.current) chartInst.current.destroy();
+    const labels = history.map(h=>h.date);
+    const prices = history.map(h=>parseFloat(h.price));
+    chartInst.current = new Chart(chartRef.current.getContext('2d'),{
+      type:'line',
+      data:{ labels, datasets:[{ label:'Price', data:prices, borderColor:'var(--blue)',
+        backgroundColor:'rgba(61,158,255,.08)', fill:true, tension:0.35,
+        pointRadius:0, borderWidth:2 }]},
+      options:{ ...baseChartOpts(), plugins:{...baseChartOpts().plugins, legend:{display:false}} },
+    });
+    return ()=>{ if(chartInst.current) chartInst.current.destroy(); };
+  },[history]);
+
+  const buyPct  = parseFloat(sentiment.buy_pct  || 0);
+  const sellPct = parseFloat(sentiment.sell_pct || 0);
+
+  return (
+    <div className="fu">
+      <div className="ph">
+        <div className="ph-title">Company Dashboard</div>
+        <div className="ph-sub">Welcome, {user?.name} — Investor Relations Portal</div>
+      </div>
+
+      {ovLoad ? <SkStats n={4}/> : (
+        <div className="g4 mb24">
+          {[
+            { l:'Current Price',   v:parseFloat(overview.current_price||0),  c:'cb', icon:'chart',  fmt:curr },
+            { l:'Total Holders',   v:parseInt(overview.total_holders||0),     c:'cg', icon:'user',   fmt:n=>`${n} investors` },
+            { l:"Today's Volume",  v:parseInt(overview.today_volume||0),      c:'ca', icon:'hist',   fmt:n=>`${n.toLocaleString()} shares` },
+            { l:"Today's Value",   v:parseFloat(overview.today_value||0),     c:'cg', icon:'wallet', fmt:curr },
+          ].map((x,i)=>(
+            <div key={i} className={`sc ${x.c}`} style={{'--d':`${i*70}ms`,animation:`fadeUp .35s ease ${i*70}ms both`}}>
+              <div className="sc-icon"><Icon n={x.icon} size={24}/></div>
+              <div className="sl">{x.l}</div>
+              <div className="sv" style={{fontSize:22}}>{x.fmt(x.v)}</div>
+              {i===0 && (
+                <div className="ss" style={{color:parseFloat(overview.change_pct||0)>=0?'var(--green)':'var(--red)'}}>
+                  {parseFloat(overview.change_pct||0)>=0?'▲':'▼'} {Math.abs(parseFloat(overview.change_pct||0))}% today
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="g2 mb24" style={{gridTemplateColumns:'2fr 1fr'}}>
+        {/* Price chart */}
+        <div className="card">
+          <div className="between mb16">
+            <div style={{fontWeight:700,fontSize:14}}>30-Day Price History</div>
+            <div className="row g6" style={{fontSize:12,color:'var(--text3)'}}>
+              <Icon n="chart" size={12}/> {overview.symbol}
+            </div>
+          </div>
+          <div style={{height:200}}>
+            {history.length ? <canvas ref={chartRef}/> : <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'var(--text3)',fontSize:13}}>Loading chart…</div>}
+          </div>
+        </div>
+
+        {/* Sentiment */}
+        <div className="card">
+          <div style={{fontWeight:700,fontSize:14,marginBottom:16}}>Investor Sentiment</div>
+          {sentiment.total_orders > 0 ? (<>
+            <div style={{marginBottom:12}}>
+              <div className="between" style={{fontSize:12,marginBottom:6}}>
+                <span style={{color:'var(--green)',fontWeight:600}}>🟢 Buy {buyPct}%</span>
+                <span style={{color:'var(--red)',fontWeight:600}}>🔴 Sell {sellPct}%</span>
+              </div>
+              <div style={{height:10,borderRadius:5,background:'var(--red)',overflow:'hidden'}}>
+                <div style={{height:'100%',width:`${buyPct}%`,background:'var(--green)',borderRadius:5,transition:'width .6s ease'}}/>
+              </div>
+            </div>
+            {[
+              {l:'Total Orders',  v:sentiment.total_orders},
+              {l:'Buy Orders',    v:sentiment.buy_count},
+              {l:'Sell Orders',   v:sentiment.sell_count},
+              {l:'Buy Volume',    v:`${(sentiment.buy_volume||0).toLocaleString()} shares`},
+              {l:'Sell Volume',   v:`${(sentiment.sell_volume||0).toLocaleString()} shares`},
+            ].map((r,i)=>(
+              <div key={i} className="between" style={{fontSize:12,padding:'5px 0',borderBottom:'1px solid var(--border)'}}>
+                <span style={{color:'var(--text3)'}}>{r.l}</span>
+                <span style={{fontWeight:600}}>{r.v}</span>
+              </div>
+            ))}
+          </>) : <div style={{color:'var(--text3)',fontSize:13}}>No trading data yet.</div>}
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   COMPANY STOCK PAGE
+════════════════════════════════════════════ */
+const CompanyStockPage = () => {
+  const [days, setDays] = useState(30);
+  const chartRef  = useRef(null);
+  const chartInst = useRef(null);
+  const { data: ovData, loading } = useData(()=>api.companyStockOverview(), []);
+  const { data: hData, loading: hLoad } = useData(()=>api.companyStockHistory(days), [days]);
+
+  const overview  = ovData?.overview  || {};
+  const sentiment = ovData?.sentiment || {};
+  const history   = hData?.history    || [];
+
+  useEffect(()=>{
+    if (!chartRef.current || !history.length) return;
+    if (chartInst.current) chartInst.current.destroy();
+    const labels = history.map(h=>h.date);
+    const prices = history.map(h=>parseFloat(h.price));
+    chartInst.current = new Chart(chartRef.current.getContext('2d'),{
+      type:'line',
+      data:{ labels, datasets:[{
+        label:'Price (₹)', data:prices,
+        borderColor:'var(--blue)', backgroundColor:'rgba(61,158,255,.07)',
+        fill:true, tension:0.4, pointRadius:0, borderWidth:2,
+      }]},
+      options:{ ...baseChartOpts(), animation:{duration:400} },
+    });
+    return ()=>{ if(chartInst.current) chartInst.current.destroy(); };
+  },[history]);
+
+  return (
+    <div className="fu">
+      <div className="ph between">
+        <div>
+          <div className="ph-title">My Stock — {overview.symbol||'…'}</div>
+          <div className="ph-sub">{overview.company_name||''}</div>
+        </div>
+        <div className="row g6">
+          {[7,14,30,90].map(d=>(
+            <button key={d} onClick={()=>setDays(d)}
+              className={cx('btn btn-xs',days===d?'btn-primary':'btn-outline')}>
+              {d}D
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? <SkStats n={4}/> : (
+        <div className="g4 mb24">
+          {[
+            {l:'Current Price', v:curr(overview.current_price||0), sub:`${parseFloat(overview.change_pct||0)>=0?'▲':'▼'}${Math.abs(parseFloat(overview.change_pct||0))}%`, pos:parseFloat(overview.change_pct||0)>=0},
+            {l:'Total Holders', v:`${parseInt(overview.total_holders||0)} investors`, sub:'Holding currently'},
+            {l:'Today Volume',  v:`${parseInt(overview.today_volume||0).toLocaleString()} shares`, sub:`Value: ${curr(overview.today_value||0)}`},
+            {l:'Sentiment',     v:`${parseFloat(sentiment.buy_pct||0)}% Buy`, sub:`${parseFloat(sentiment.sell_pct||0)}% Sell`},
+          ].map((x,i)=>(
+            <div key={i} className="sc cb" style={{animation:`fadeUp .35s ease ${i*70}ms both`}}>
+              <div className="sl">{x.l}</div>
+              <div className="sv" style={{fontSize:20,marginTop:8}}>{x.v}</div>
+              <div className="ss" style={{color:x.pos===false?'var(--red)':x.pos?'var(--green)':'var(--text3)'}}>{x.sub}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="card mb24">
+        <div className="between mb12">
+          <span style={{fontWeight:700,fontSize:14}}>Price History ({days} days)</span>
+          {hLoad && <span className="spin spin-sm"/>}
+        </div>
+        <div style={{height:260}}>
+          {history.length ? <canvas ref={chartRef}/> : <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',color:'var(--text3)'}}>No data</div>}
+        </div>
+      </div>
+
+      <div className="card">
+        <div style={{fontWeight:700,fontSize:14,marginBottom:16}}>Detailed Sentiment Breakdown</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+          {[
+            {l:'Total Executed Orders', v:sentiment.total_orders||0},
+            {l:'Buy Orders',            v:sentiment.buy_count||0},
+            {l:'Sell Orders',           v:sentiment.sell_count||0},
+            {l:'Buy Volume (shares)',   v:(sentiment.buy_volume||0).toLocaleString()},
+            {l:'Sell Volume (shares)',  v:(sentiment.sell_volume||0).toLocaleString()},
+            {l:'Active Holders',        v:(sentiment.total_holders||0).toLocaleString()},
+          ].map((x,i)=>(
+            <div key={i} style={{background:'var(--bg2)',borderRadius:8,padding:'12px 16px'}}>
+              <div style={{fontSize:11,color:'var(--text3)',marginBottom:4}}>{x.l}</div>
+              <div style={{fontSize:20,fontWeight:700,fontFamily:'JetBrains Mono'}}>{x.v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   COMPANY ANNOUNCEMENTS PAGE
+════════════════════════════════════════════ */
+const CompanyAnnouncementsPage = () => {
+  const { addNotif } = useApp();
+  const { data, loading, refetch } = useData(()=>api.companyAnnouncements(), []);
+  const announcements = data?.announcements || [];
+
+  const BLANK = { title:'', content:'', announcement_type:'RESULTS', effective_date:'', is_published:false };
+  const [form,    setForm]    = useState(BLANK);
+  const [editing, setEditing] = useState(null);   // announcement_id or null
+  const [showForm,setShowForm]= useState(false);
+  const [saving,  setSaving]  = useState(false);
+
+  const openNew = () => { setForm(BLANK); setEditing(null); setShowForm(true); };
+  const openEdit = a => {
+    setForm({
+      title:             a.title,
+      content:           a.content,
+      announcement_type: a.announcement_type,
+      effective_date:    a.effective_date ? a.effective_date.slice(0,10) : '',
+      is_published:      a.is_published,
+    });
+    setEditing(a.announcement_id);
+    setShowForm(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.title || !form.content) return addNotif({t:'err',title:'Title and content required.'});
+    setSaving(true);
+    try {
+      if (editing) {
+        await api.updateAnnouncement(editing, form);
+        addNotif({t:'ok',title:'Announcement updated.'});
+      } else {
+        await api.createAnnouncement(form);
+        addNotif({t:'ok',title:'Announcement created.'});
+      }
+      setShowForm(false); refetch();
+    } catch(e) {
+      addNotif({t:'err',title:'Failed to save.', msg:e.message});
+    } finally { setSaving(false); }
+  };
+
+  const handlePublish = async a => {
+    try {
+      await api.updateAnnouncement(a.announcement_id, {...a, is_published:true});
+      addNotif({t:'ok',title:'Published successfully.'});
+      refetch();
+    } catch(e) { addNotif({t:'err',title:'Failed to publish.'}); }
+  };
+
+  const handleDelete = async id => {
+    if (!confirm('Delete this draft announcement?')) return;
+    try {
+      await api.deleteAnnouncement(id);
+      addNotif({t:'ok',title:'Deleted.'}); refetch();
+    } catch(e) { addNotif({t:'err',title:'Cannot delete published announcement.'}); }
+  };
+
+  const ANN_TYPES = ['DIVIDEND','SPLIT','BONUS','RESULTS','AGM','OTHER'];
+
+  return (
+    <div className="fu">
+      <div className="ph between">
+        <div>
+          <div className="ph-title">Announcements</div>
+          <div className="ph-sub">Manage regulatory disclosures and press releases</div>
+        </div>
+        <button className="btn btn-primary row g6" onClick={openNew}>
+          <Icon n="plus" size={14}/>New Announcement
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="card mb24" style={{border:'1px solid var(--blue)',background:'var(--bg2)'}}>
+          <div style={{fontWeight:700,fontSize:14,marginBottom:16}}>
+            {editing ? 'Edit Announcement' : 'New Announcement'}
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+            <div style={{gridColumn:'1/-1'}}>
+              <label style={{fontSize:12,color:'var(--text3)',display:'block',marginBottom:4}}>Title *</label>
+              <input className="inp" value={form.title}
+                onChange={e=>setForm(f=>({...f,title:e.target.value}))}
+                placeholder="e.g. Q3 FY2025 Dividend Declaration"/>
+            </div>
+            <div>
+              <label style={{fontSize:12,color:'var(--text3)',display:'block',marginBottom:4}}>Type *</label>
+              <select className="inp" value={form.announcement_type}
+                onChange={e=>setForm(f=>({...f,announcement_type:e.target.value}))}>
+                {ANN_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{fontSize:12,color:'var(--text3)',display:'block',marginBottom:4}}>Effective Date</label>
+              <input className="inp" type="date" value={form.effective_date}
+                onChange={e=>setForm(f=>({...f,effective_date:e.target.value}))}/>
+            </div>
+            <div style={{gridColumn:'1/-1'}}>
+              <label style={{fontSize:12,color:'var(--text3)',display:'block',marginBottom:4}}>Content *</label>
+              <textarea className="inp" rows={5} value={form.content}
+                onChange={e=>setForm(f=>({...f,content:e.target.value}))}
+                placeholder="Full announcement text…" style={{resize:'vertical'}}/>
+            </div>
+            <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:8}}>
+              <input type="checkbox" id="pub_chk" checked={form.is_published}
+                onChange={e=>setForm(f=>({...f,is_published:e.target.checked}))}/>
+              <label htmlFor="pub_chk" style={{fontSize:13,cursor:'pointer'}}>
+                Publish immediately (cannot be deleted after publishing)
+              </label>
+            </div>
+          </div>
+          <div className="row g8">
+            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+              {saving ? <span className="spin spin-sm"/> : (editing ? 'Update' : 'Create')}
+            </button>
+            <button className="btn btn-outline" onClick={()=>setShowForm(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {loading ? <SkTable/> : (
+        <div className="card">
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Title</th><th>Type</th><th>Effective Date</th>
+                <th>Status</th><th>Created</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {announcements.length === 0 && (
+                <tr><td colSpan={6} style={{textAlign:'center',color:'var(--text3)',padding:24}}>
+                  No announcements yet. Create your first one.
+                </td></tr>
+              )}
+              {announcements.map(a=>(
+                <tr key={a.announcement_id}>
+                  <td style={{fontWeight:600,maxWidth:240}}>{a.title}</td>
+                  <td><span className="badge bb">{a.announcement_type}</span></td>
+                  <td style={{fontSize:12}}>{a.effective_date ? new Date(a.effective_date).toLocaleDateString('en-IN') : '—'}</td>
+                  <td>
+                    <span className={`badge ${a.is_published?'bg':'ba'}`}>
+                      {a.is_published ? '✓ Published' : 'Draft'}
+                    </span>
+                  </td>
+                  <td style={{fontSize:11,color:'var(--text3)'}}>{new Date(a.created_at).toLocaleDateString()}</td>
+                  <td>
+                    <div className="row g6">
+                      <button className="btn btn-xs btn-outline" onClick={()=>openEdit(a)}>Edit</button>
+                      {!a.is_published && <>
+                        <button className="btn btn-xs btn-primary" onClick={()=>handlePublish(a)}>Publish</button>
+                        <button className="btn btn-xs btn-outline"
+                          style={{color:'var(--red)',borderColor:'rgba(255,61,107,.3)'}}
+                          onClick={()=>handleDelete(a.announcement_id)}>Delete</button>
+                      </>}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   COMPANY FINANCIALS PAGE
+════════════════════════════════════════════ */
+const CompanyFinancialsPage = () => {
+  const { addNotif } = useApp();
+  const { data, loading, refetch } = useData(()=>api.companyFinancials(), []);
+  const financials = data?.financials || [];
+
+  const BLANK = { quarter:'Q1', fiscal_year: new Date().getFullYear(), revenue:'', net_profit:'', eps:'' };
+  const [form,    setForm]    = useState(BLANK);
+  const [showForm,setShowForm]= useState(false);
+  const [saving,  setSaving]  = useState(false);
+
+  const handleSave = async () => {
+    if (!form.revenue || !form.net_profit || !form.eps)
+      return addNotif({t:'err',title:'All financial fields are required.'});
+    setSaving(true);
+    try {
+      await api.createFinancial(form);
+      addNotif({t:'ok',title:'Financial result saved.'});
+      setShowForm(false); setForm(BLANK); refetch();
+    } catch(e) {
+      addNotif({t:'err',title:'Failed to save.', msg:e.message});
+    } finally { setSaving(false); }
+  };
+
+  const crore = n => {
+    const v = parseFloat(n||0);
+    if (Math.abs(v) >= 1e7) return `₹${(v/1e7).toFixed(2)} Cr`;
+    if (Math.abs(v) >= 1e5) return `₹${(v/1e5).toFixed(2)} L`;
+    return `₹${v.toLocaleString('en-IN',{minimumFractionDigits:2})}`;
+  };
+
+  return (
+    <div className="fu">
+      <div className="ph between">
+        <div>
+          <div className="ph-title">Financial Results</div>
+          <div className="ph-sub">Quarterly earnings disclosures</div>
+        </div>
+        <button className="btn btn-primary row g6" onClick={()=>setShowForm(s=>!s)}>
+          <Icon n="plus" size={14}/>Upload Results
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="card mb24" style={{border:'1px solid var(--blue)',background:'var(--bg2)'}}>
+          <div style={{fontWeight:700,fontSize:14,marginBottom:16}}>Upload Quarterly Result</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:16}}>
+            <div>
+              <label style={{fontSize:12,color:'var(--text3)',display:'block',marginBottom:4}}>Quarter</label>
+              <select className="inp" value={form.quarter}
+                onChange={e=>setForm(f=>({...f,quarter:e.target.value}))}>
+                {['Q1','Q2','Q3','Q4'].map(q=><option key={q}>{q}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{fontSize:12,color:'var(--text3)',display:'block',marginBottom:4}}>Fiscal Year</label>
+              <input className="inp" type="number" value={form.fiscal_year}
+                onChange={e=>setForm(f=>({...f,fiscal_year:e.target.value}))}/>
+            </div>
+            <div>
+              <label style={{fontSize:12,color:'var(--text3)',display:'block',marginBottom:4}}>Revenue (₹)</label>
+              <input className="inp" type="number" value={form.revenue} placeholder="e.g. 50000000"
+                onChange={e=>setForm(f=>({...f,revenue:e.target.value}))}/>
+            </div>
+            <div>
+              <label style={{fontSize:12,color:'var(--text3)',display:'block',marginBottom:4}}>Net Profit (₹)</label>
+              <input className="inp" type="number" value={form.net_profit} placeholder="e.g. 8000000"
+                onChange={e=>setForm(f=>({...f,net_profit:e.target.value}))}/>
+            </div>
+            <div>
+              <label style={{fontSize:12,color:'var(--text3)',display:'block',marginBottom:4}}>EPS (₹)</label>
+              <input className="inp" type="number" step="0.01" value={form.eps} placeholder="e.g. 12.50"
+                onChange={e=>setForm(f=>({...f,eps:e.target.value}))}/>
+            </div>
+          </div>
+          <div className="row g8">
+            <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+              {saving ? <span className="spin spin-sm"/> : 'Save Result'}
+            </button>
+            <button className="btn btn-outline" onClick={()=>setShowForm(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {loading ? <SkTable/> : (
+        <div className="card">
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Quarter</th><th>Fiscal Year</th>
+                <th style={{textAlign:'right'}}>Revenue</th>
+                <th style={{textAlign:'right'}}>Net Profit</th>
+                <th style={{textAlign:'right'}}>EPS</th>
+                <th style={{textAlign:'right'}}>Profit Margin</th>
+                <th>Published</th>
+              </tr>
+            </thead>
+            <tbody>
+              {financials.length === 0 && (
+                <tr><td colSpan={7} style={{textAlign:'center',color:'var(--text3)',padding:24}}>
+                  No results uploaded yet.
+                </td></tr>
+              )}
+              {financials.map(f=>{
+                const margin = parseFloat(f.revenue)>0
+                  ? ((parseFloat(f.net_profit)/parseFloat(f.revenue))*100).toFixed(1)
+                  : '—';
+                const isProfit = parseFloat(f.net_profit||0)>=0;
+                return (
+                  <tr key={f.financial_id}>
+                    <td><span className="badge bb">{f.quarter}</span></td>
+                    <td style={{fontWeight:600}}>FY{f.fiscal_year}</td>
+                    <td style={{textAlign:'right',fontFamily:'JetBrains Mono'}}>{crore(f.revenue)}</td>
+                    <td style={{textAlign:'right',fontFamily:'JetBrains Mono',color:isProfit?'var(--green)':'var(--red)'}}>
+                      {crore(f.net_profit)}
+                    </td>
+                    <td style={{textAlign:'right',fontFamily:'JetBrains Mono'}}>₹{parseFloat(f.eps).toFixed(2)}</td>
+                    <td style={{textAlign:'right',color:isProfit?'var(--green)':'var(--red)'}}>
+                      {margin !== '—' ? `${margin}%` : '—'}
+                    </td>
+                    <td style={{fontSize:11,color:'var(--text3)'}}>{new Date(f.published_at).toLocaleDateString()}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   COMPANY PROFILE PAGE
+════════════════════════════════════════════ */
+const CompanyProfilePage = () => {
+  const { addNotif } = useApp();
+  const { data, loading, refetch } = useData(()=>api.companyProfile(), []);
+  const profile = data?.profile || {};
+
+  const [editing, setEditing] = useState(false);
+  const [form,    setForm]    = useState({});
+  const [saving,  setSaving]  = useState(false);
+
+  useEffect(()=>{
+    if (profile.company_id) {
+      setForm({
+        contact_email:      profile.contact_email || '',
+        website:            profile.website || '',
+        registered_address: profile.registered_address || '',
+      });
+    }
+  },[profile.company_id]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.put('/company/profile', form);
+      addNotif({t:'ok',title:'Profile updated.'}); setEditing(false); refetch();
+    } catch(e) {
+      addNotif({t:'err',title:'Failed to update.', msg:e.message});
+    } finally { setSaving(false); }
+  };
+
+  if (loading) return <div className="fu"><SkCard/></div>;
+
+  return (
+    <div className="fu">
+      <div className="ph between">
+        <div>
+          <div className="ph-title">Company Profile</div>
+          <div className="ph-sub">Your registered company details on TradeFlow</div>
+        </div>
+        {!editing && (
+          <button className="btn btn-outline row g6" onClick={()=>setEditing(true)}>
+            <Icon n="logs" size={13}/>Edit Profile
+          </button>
+        )}
+      </div>
+
+      <div className="g2" style={{gridTemplateColumns:'1fr 1fr',gap:20}}>
+        {/* Identity card */}
+        <div className="card">
+          <div className="between mb16">
+            <div style={{fontWeight:700,fontSize:14}}>Company Identity</div>
+            {profile.verified
+              ? <span className="badge bg row g4"><Icon n="chk" size={11}/>Verified</span>
+              : <span className="badge ba">Pending Verification</span>}
+          </div>
+          {[
+            {l:'Company Name',   v:profile.company_name},
+            {l:'CIN Number',     v:profile.cin_number||'—'},
+            {l:'Listed Symbol',  v:profile.symbol},
+            {l:'Stock Name',     v:profile.stock_name},
+          ].map((r,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid var(--border)',fontSize:13}}>
+              <span style={{color:'var(--text3)'}}>{r.l}</span>
+              <span style={{fontWeight:600}}>{r.v}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Editable details */}
+        <div className="card">
+          <div style={{fontWeight:700,fontSize:14,marginBottom:16}}>Contact Details</div>
+          {editing ? (
+            <>
+              {[
+                {l:'Contact Email',      k:'contact_email',      type:'email'},
+                {l:'Website',           k:'website',             type:'url'},
+                {l:'Registered Address',k:'registered_address',  type:'text'},
+              ].map(({l,k,type})=>(
+                <div key={k} style={{marginBottom:12}}>
+                  <label style={{fontSize:12,color:'var(--text3)',display:'block',marginBottom:4}}>{l}</label>
+                  <input className="inp" type={type} value={form[k]||''}
+                    onChange={e=>setForm(f=>({...f,[k]:e.target.value}))}/>
+                </div>
+              ))}
+              <div className="row g8 mt12">
+                <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                  {saving?<span className="spin spin-sm"/>:'Save Changes'}
+                </button>
+                <button className="btn btn-outline" onClick={()=>setEditing(false)}>Cancel</button>
+              </div>
+            </>
+          ) : (
+            <>
+              {[
+                {l:'Contact Email', v:profile.contact_email||'—'},
+                {l:'Website',       v:profile.website       ? <a href={profile.website} target="_blank" rel="noreferrer" style={{color:'var(--blue)'}}>{profile.website}</a> : '—'},
+                {l:'Address',       v:profile.registered_address||'—'},
+              ].map((r,i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid var(--border)',fontSize:13}}>
+                  <span style={{color:'var(--text3)'}}>{r.l}</span>
+                  <span style={{fontWeight:600,maxWidth:'60%',textAlign:'right'}}>{r.v}</span>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+
+      {!profile.verified && (
+        <div className="card mt20" style={{border:'1px solid var(--amber)',background:'rgba(255,184,0,.05)'}}>
+          <div className="row g10">
+            <Icon n="alrt" size={18} color="var(--amber)"/>
+            <div>
+              <div style={{fontWeight:700,color:'var(--amber)',fontSize:13}}>Verification Pending</div>
+              <div style={{fontSize:12,color:'var(--text2)',marginTop:3}}>
+                Your company profile is awaiting admin verification. Some features may be limited until verified.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   ADMIN: COMPANIES TAB (added to AdminPage)
+════════════════════════════════════════════ */
+const AdminCompaniesTab = () => {
+  const { addNotif } = useApp();
+  const { data, loading, refetch } = useData(()=>api.adminCompanies(), []);
+  const companies = data?.companies || [];
+
+  const handleVerify = async (id, verified) => {
+    try {
+      await api.verifyCompany(id, verified);
+      addNotif({t:'ok',title:verified?'Company verified.':'Verification revoked.'});
+      refetch();
+    } catch(e) { addNotif({t:'err',title:'Failed to update verification.'}); }
+  };
+
+  const handleDelete = async id => {
+    if (!confirm('Delete this company profile?')) return;
+    try {
+      await api.deleteCompany(id);
+      addNotif({t:'ok',title:'Company profile deleted.'}); refetch();
+    } catch(e) { addNotif({t:'err',title:'Failed to delete.'}); }
+  };
+
+  return (
+    <div>
+      <div className="between mb16">
+        <div style={{fontWeight:700,fontSize:14}}>Registered Companies</div>
+        <span style={{fontSize:12,color:'var(--text3)'}}>{companies.length} total</span>
+      </div>
+      {loading ? <SkTable/> : (
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th>Company Name</th><th>Stock Symbol</th>
+              <th>Contact Email</th><th>Status</th>
+              <th>Registered</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {companies.length===0 && (
+              <tr><td colSpan={6} style={{textAlign:'center',color:'var(--text3)',padding:24}}>No company profiles registered.</td></tr>
+            )}
+            {companies.map(c=>(
+              <tr key={c.company_id}>
+                <td style={{fontWeight:600}}>{c.company_name}</td>
+                <td><span className="badge bb">{c.symbol}</span></td>
+                <td style={{fontSize:12,color:'var(--text3)'}}>{c.contact_email||'—'}</td>
+                <td>
+                  <span className={`badge ${c.verified?'bg':'ba'}`}>
+                    {c.verified?'✓ Verified':'Pending'}
+                  </span>
+                </td>
+                <td style={{fontSize:11,color:'var(--text3)'}}>{new Date(c.created_at).toLocaleDateString()}</td>
+                <td>
+                  <div className="row g6">
+                    {c.verified
+                      ? <button className="btn btn-xs btn-outline" onClick={()=>handleVerify(c.company_id,false)}>Revoke</button>
+                      : <button className="btn btn-xs btn-primary" onClick={()=>handleVerify(c.company_id,true)}>Verify</button>
+                    }
+                    <button className="btn btn-xs btn-outline"
+                      style={{color:'var(--red)',borderColor:'rgba(255,61,107,.3)'}}
+                      onClick={()=>handleDelete(c.company_id)}>Delete</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+};
+
+const App = () => {
+  const [isLoggedIn,  setLoggedIn]  = useState(false);
+  const [user,        setUser]      = useState(null);
+  const [authChecked, setAuthChk]   = useState(false);
+  const [dark,        setDark]      = useState(true);
+  const [page,        setPage]      = useState('dashboard');
+  const [sbOpen,      setSbOpen]    = useState(false);
+  const [notifs,      setNotifs]    = useState([]);
+  const [preselect,   setPreselect] = useState(null);
+
+  const [stocks,       setStocks]    = useState(null);
+  const [wallet,       setWallet]    = useState(null);
+  const [portfolio,    setPortfolio] = useState(null);
+  const [recentOrders, setRecentOrd] = useState(null);
+
+  useEffect(()=>{ document.documentElement.className = dark?'':'light'; },[dark]);
+
+  // Restore JWT session
+  useEffect(()=>{
+    const tok = localStorage.getItem('tf_token');
+    if (tok) {
+      api.setToken(tok);
+      api.me()
+        .then(d=>{ setUser(d.user); setLoggedIn(true); setAuthChk(true); })
+        .catch(()=>{ localStorage.removeItem('tf_token'); setAuthChk(true); });
+    } else { setAuthChk(true); }
+  },[]);
+
+  const [backendErr, setBackendErr] = useState(null);
+
+  const fetchAll = useCallback(async()=>{
+    if (!isLoggedIn) return;
+    const isCompany = user?.role === 'COMPANY';
+
+    // COMPANY users don't need wallet/portfolio/orders - those are USER features
+    if (isCompany) {
+      const [s] = await Promise.allSettled([api.stocks()]);
+      setStocks(s.status==='fulfilled' ? (s.value?.stocks || []) : []);
+      setBackendErr(s.status==='rejected' ? (s.reason?.message || 'Cannot reach backend.') : null);
+      return;
+    }
+
+    // Use allSettled so one failing call never wipes out the others
+    const [s, w, p, o] = await Promise.allSettled([
+      api.stocks(), api.wallet(), api.portfolio(), api.orders(),
+    ]);
+
+    const log = (name, r) => {
+      if (r.status === 'rejected') console.error(`[fetchAll] ${name} failed:`, r.reason?.message);
+    };
+    log('stocks', s); log('wallet', w); log('portfolio', p); log('orders', o);
+
+    setStocks(    s.status==='fulfilled' ? (s.value?.stocks    || []) : []);
+    setWallet(    w.status==='fulfilled' ? (w.value?.wallet    || null) : null);
+    setPortfolio( p.status==='fulfilled' ? (p.value?.portfolio || []) : []);
+    setRecentOrd( o.status==='fulfilled' ? (o.value?.orders    || []) : []);
+
+    if (s.status==='rejected') {
+      setBackendErr(s.reason?.message || 'Cannot reach backend. Is the server running on port 4000?');
+    } else {
+      setBackendErr(null);
+    }
+  },[isLoggedIn, user?.role]);
+
+  useEffect(()=>{ fetchAll(); },[fetchAll]);
+
+  // 5-second polling for live feel (skip wallet/portfolio for COMPANY role)
+  useEffect(()=>{
+    if (!isLoggedIn) return;
+    const isCompany = user?.role === 'COMPANY';
+    const id = setInterval(()=>{
+      api.stocks().then(d=>{ if(d?.stocks) setStocks(d.stocks); }).catch(()=>{});
+      if (!isCompany) {
+        api.wallet().then(d=>{ if(d?.wallet) setWallet(d.wallet); }).catch(()=>{});
+      }
+    }, 5000);
+    return ()=>clearInterval(id);
+  },[isLoggedIn, user?.role]);
+
+  const addNotif = useCallback(n=>{
+    const id = Date.now();
+    setNotifs(prev=>[...prev,{...n,id}]);
+    setTimeout(()=>setNotifs(prev=>prev.filter(x=>x.id!==id)), 6000);
+  },[]);
+  const removeNotif = useCallback(id=>setNotifs(prev=>prev.filter(n=>n.id!==id)),[]);
+
+  const handleLogin = useCallback(u=>{
+    setUser(u);
+    setLoggedIn(true);
+    // COMPANY users land on company dashboard
+    if (u?.role === 'COMPANY') setPage('co_dashboard');
+    else setPage('dashboard');
+  },[]);
+  const logout = useCallback(()=>{
+    setLoggedIn(false); setUser(null);
+    setStocks(null); setWallet(null); setPortfolio(null); setRecentOrd(null);
+    api.clearToken(); localStorage.removeItem('tf_token');
+    setPage('dashboard');
+  },[]);
+
+  const clearPreselect = useCallback(()=>setPreselect(null),[]);
+
+  const PAGES = {
+    // USER pages
+    dashboard: <Dashboard/>,
+    stocks:    <StocksPage/>,
+    order:     <OrderPage/>,
+    portfolio: <PortfolioPage/>,
+    wallet:    <WalletPage/>,
+    history:   <HistoryPage/>,
+    // ADMIN pages
+    admin:     <AdminPage/>,
+    logs:      <LogsPage/>,
+    // COMPANY pages
+    co_dashboard:     <CompanyDashboard/>,
+    co_stock:         <CompanyStockPage/>,
+    co_profile:       <CompanyProfilePage/>,
+  };
+
+  // Auth check loader
+  if (!authChecked) return (
+    <div style={{minHeight:'100vh',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:20}}>
+      <div style={{width:48,height:48,borderRadius:14,background:'var(--accent)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'var(--shadow-glow)'}}>
+        <Icon n="chart" size={24} color="#060810"/>
+      </div>
+      <span className="spin spin-lg"/>
+      <span style={{color:'var(--text3)',fontSize:13}}>Checking session…</span>
+    </div>
+  );
+
+  if (!isLoggedIn) return <Login onLogin={handleLogin}/>;
+
+  const ctx = {
+    user, wallet, stocks, portfolio, recentOrders,
+    refreshAll: fetchAll, addNotif, logout,
+    page, setPage, preselect, setPreselect, clearPreselect,
+  };
+
+  return (
+    <Ctx.Provider value={ctx}>
+      <NotifStack items={notifs} remove={removeNotif}/>
+      <Sidebar page={page} setPage={setPage} open={sbOpen} setOpen={setSbOpen}/>
+      {sbOpen&&<div className="mob-ov" onClick={()=>setSbOpen(false)}/>}
+      <div className="main">
+        {backendErr && (
+          <div style={{
+            background:'var(--red-bg)',border:'1px solid var(--red)',borderRadius:0,
+            padding:'10px 24px',display:'flex',alignItems:'center',gap:12,
+            fontSize:13,color:'var(--red)',position:'sticky',top:0,zIndex:250,
+          }}>
+            <Icon n="lock" size={14}/>
+            <span><strong>Backend error:</strong> {backendErr}</span>
+            <button className="btn btn-xs btn-outline" style={{marginLeft:'auto',borderColor:'var(--red)',color:'var(--red)'}}
+              onClick={fetchAll}>Retry</button>
+          </div>
+        )}
+        <Ticker stocks={stocks||[]}/>
+        <Topbar dark={dark} setDark={setDark} setSbOpen={setSbOpen}/>
+        <div className="content">
+          <div key={page} className="fu">
+            {PAGES[page]||<Dashboard/>}
+          </div>
+        </div>
+      </div>
+    </Ctx.Provider>
+  );
+};
+
+ReactDOM.render(<App/>, document.getElementById('root'));
+</script>
+</body>
+</html>
